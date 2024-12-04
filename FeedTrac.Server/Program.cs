@@ -1,6 +1,7 @@
 
 using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
+using FeedTrac.Server.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,6 +30,7 @@ namespace FeedTrac.Server
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("database")));
+            builder.Services.AddScoped<UserService>();
 
             var app = builder.Build();
 
