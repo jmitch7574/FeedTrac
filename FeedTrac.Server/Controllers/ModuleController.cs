@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FeedTrac.Server.Controllers;
 
+[ApiController]
+[Route("modules")]
 public class ModuleController : Controller
 {
 
@@ -18,12 +20,14 @@ public class ModuleController : Controller
         _moduleService = moduleService;
     }
 
+    [HttpGet]
     public async Task<IActionResult> GetModules()
     {
         var modules = await _moduleService.GetUserModulesAsync();
         return Ok(modules);
     }
 
+    [HttpGet("{id}")]
     public async Task<IActionResult> GetModule(int id)
     {
         var module = await _moduleService.GetModuleAsync(id);
@@ -32,6 +36,18 @@ public class ModuleController : Controller
             return NotFound("Module not found");
         }
 
+        return Ok(module);
+    }
+
+    [HttpPost]
+    [Route("create")]
+    public async Task<IActionResult> CreateModule(string name)
+    {
+        if (_userService.GetCurrentUserId() == null)
+            return Unauthorized("You must be signed in to create a module");
+    
+
+        var module = await _moduleService.CreateModuleAsync(name);
         return Ok(module);
     }
 }

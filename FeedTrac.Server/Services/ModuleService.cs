@@ -7,11 +7,13 @@ namespace FeedTrac.Server.Services;
 public class ModuleService
 {
     private readonly ApplicationDbContext _context;
+    private readonly UserService _userService;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ModuleService(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor)
+    public ModuleService(ApplicationDbContext context, UserService userService, IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
+        _userService = userService;
         _httpContextAccessor = httpContextAccessor;
     }
 
@@ -40,6 +42,11 @@ public class ModuleService
             Name = ModuleName,
             JoinCode = Guid.NewGuid().ToString().Substring(0, 6)
         };
+        newModule.UserModules.Add(new UserModule
+        {
+            UserId = _userService.GetCurrentUserId(),
+            Role = 0
+        });
         _context.Modules.Add(newModule);
         await _context.SaveChangesAsync();
         return newModule;

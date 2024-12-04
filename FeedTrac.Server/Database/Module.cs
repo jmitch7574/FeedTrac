@@ -2,6 +2,8 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+
 public class Module
 {
     [Required]
@@ -17,6 +19,7 @@ public class Module
     [Required]
     public virtual string Name { get; set; } = null!;
 
+    [JsonIgnore]
     public List<UserModule> UserModules { get; set; } = new();
 
 

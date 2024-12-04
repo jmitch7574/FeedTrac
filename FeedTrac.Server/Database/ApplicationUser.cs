@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace FeedTrac.Server.Database
 {
@@ -16,6 +17,7 @@ namespace FeedTrac.Server.Database
         [Column(TypeName = "varchar(255)")]
         public virtual string? LastName { get; set; }
 
+        [JsonIgnore]
         public virtual List<UserModule> UserModules { get; set; } = new();
     }
 }
