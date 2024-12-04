@@ -22,21 +22,6 @@ namespace FeedTrac.Server.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("ApplicationUserModule", b =>
-                {
-                    b.Property<int>("ModulesId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UsersId")
-                        .HasColumnType("text");
-
-                    b.HasKey("ModulesId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("ApplicationUserModule", "feedtrac");
-                });
-
             modelBuilder.Entity("FeedTrac.Server.Database.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -93,7 +78,7 @@ namespace FeedTrac.Server.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
@@ -108,6 +93,33 @@ namespace FeedTrac.Server.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Modules", "feedtrac");
+                });
+
+            modelBuilder.Entity("FeedTrac.Server.Database.UserModule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ModuleId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ModuleId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserModules", "feedtrac");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -242,19 +254,23 @@ namespace FeedTrac.Server.Migrations
                     b.ToTable("AspNetUserTokens", "feedtrac");
                 });
 
-            modelBuilder.Entity("ApplicationUserModule", b =>
+            modelBuilder.Entity("FeedTrac.Server.Database.UserModule", b =>
                 {
-                    b.HasOne("FeedTrac.Server.Database.Module", null)
-                        .WithMany()
-                        .HasForeignKey("ModulesId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("FeedTrac.Server.Database.Module", "Module")
+                        .WithMany("UserModules")
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("FeedTrac.Server.Database.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("FeedTrac.Server.Database.ApplicationUser", "User")
+                        .WithMany("UserModules")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Module");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -306,6 +322,16 @@ namespace FeedTrac.Server.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("FeedTrac.Server.Database.ApplicationUser", b =>
+                {
+                    b.Navigation("UserModules");
+                });
+
+            modelBuilder.Entity("FeedTrac.Server.Database.Module", b =>
+                {
+                    b.Navigation("UserModules");
                 });
 #pragma warning restore 612, 618
         }

@@ -15,12 +15,33 @@ public class ModuleService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<List<Module>> GetModulesAsync()
+    public async Task<List<Module>> GetUserModulesAsync()
     {
         var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null)
             throw new Exception("User is not logged in.");
 
-        return await _context.Modules.Where(m => m.Users.Any(u => u.Id == userId)).ToListAsync();
+        return await _context.Modules.Where(m => m.UserModules.Any(u => u.User.Id == userId)).ToListAsync();
+    }
+
+    public async Task<Module> GetModuleAsync(int id)
+    {
+        var module = await _context.Modules.Where(m => m.Id == id).FirstOrDefaultAsync();
+        if (module == null)
+            throw new Exception("Module not found.");
+
+        return module;
+    }
+
+    public async Task<Module> CreateModuleAsync(string ModuleName)
+    {
+        Module newModule = new Module
+        {
+            Name = ModuleName,
+            JoinCode = Guid.NewGuid().ToString().Substring(0, 6)
+        };
+        _context.Modules.Add(newModule);
+        await _context.SaveChangesAsync();
+        return newModule;
     }
 }

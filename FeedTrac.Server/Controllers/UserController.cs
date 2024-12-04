@@ -36,7 +36,7 @@ public class UserController : Controller
     [HttpGet]
     [Route("modules")]
     public async Task<IActionResult> GetModules() {
-        var modules = await _moduleService.GetModulesAsync();
+        var modules = await _moduleService.GetUserModulesAsync();
         return Ok(modules);
     }
 }
