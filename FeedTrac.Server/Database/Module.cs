@@ -17,4 +17,6 @@ public class Module
     [Required]
     public virtual string Name { get; set; } = null!;
 
+    public virtual List<ApplicationUser> Users { get; set; } = new();
+
 }

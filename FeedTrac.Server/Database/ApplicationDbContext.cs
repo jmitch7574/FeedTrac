@@ -7,7 +7,6 @@ namespace FeedTrac.Server.Database
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public DbSet<Module> Modules { get; set; }
-        public DbSet<JoinedModule> JoinModules { get; set; }
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
             
@@ -24,6 +23,10 @@ namespace FeedTrac.Server.Database
                 .Ignore(c => c.LockoutEnd)
                 .Ignore(c => c.LockoutEnabled)
                 .Ignore(c => c.AccessFailedCount);
+
+            builder.Entity<ApplicationUser>()
+                .HasMany<Module>(s => s.Modules)
+                .WithMany(c => c.Users);
         }
 
     }

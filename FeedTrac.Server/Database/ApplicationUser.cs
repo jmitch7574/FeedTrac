@@ -15,5 +15,7 @@ namespace FeedTrac.Server.Database
         [ProtectedPersonalData]
         [Column(TypeName = "varchar(255)")]
         public virtual string? LastName { get; set; }
+
+        public virtual List<Module> Modules { get; set; } = new();
     }
 }
