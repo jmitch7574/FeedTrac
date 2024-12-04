@@ -31,6 +31,7 @@ namespace FeedTrac.Server
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("database")));
             builder.Services.AddScoped<UserService>();
+            builder.Services.AddScoped<ModuleService>();
 
             var app = builder.Build();
 
