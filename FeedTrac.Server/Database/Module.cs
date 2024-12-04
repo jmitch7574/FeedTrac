@@ -4,8 +4,8 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 public class Module
 {
+    [Required]
     [Key]
-    [Column(TypeName = "int")]
     public virtual int Id { get; set; }
 
     [Column(TypeName = "char(6)")]
@@ -17,6 +17,7 @@ public class Module
     [Required]
     public virtual string Name { get; set; } = null!;
 
-    public virtual List<ApplicationUser> Users { get; set; } = new();
+    public List<UserModule> UserModules { get; set; } = new();
+
 
 }
