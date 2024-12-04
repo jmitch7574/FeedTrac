@@ -23,20 +23,29 @@ public class ModuleController : Controller
     [HttpGet]
     public async Task<IActionResult> GetModules()
     {
-        var modules = await _moduleService.GetUserModulesAsync();
-        return Ok(modules);
+        try
+        {
+            var modules = await _moduleService.GetUserModulesAsync();
+            return Ok(modules);
+        }
+        catch (Exception e)
+        {
+            return Unauthorized(e.Message);
+        }
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetModule(int id)
     {
-        var module = await _moduleService.GetModuleAsync(id);
-        if (module == null)
+        try
+        {
+            var module = await _moduleService.GetModuleAsync(id);
+            return Ok(module);
+        }
+        catch
         {
             return NotFound("Module not found");
         }
-
-        return Ok(module);
     }
 
     [HttpPost]
