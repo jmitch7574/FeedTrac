@@ -1,4 +1,9 @@
 
+using FeedTrac.Server.Database;
+using FeedTrac.Server.Extensions;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
 namespace FeedTrac.Server
 {
     public class Program
@@ -14,6 +19,17 @@ namespace FeedTrac.Server
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            // Establish Connection to SQL Server
+            builder.Services.AddAuthorization();
+            builder.Services.AddAuthentication().AddCookie(IdentityConstants.ApplicationScheme);
+
+            builder.Services.AddIdentityCore<ApplicationUser>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddApiEndpoints();
+
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseNpgsql(builder.Configuration.GetConnectionString("database")));
+
             var app = builder.Build();
 
             app.UseDefaultFiles();
@@ -24,7 +40,11 @@ namespace FeedTrac.Server
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+
+                app.ApplyMigrations();
             }
+
+            app.MapIdentityApi<ApplicationUser>();
 
             app.UseHttpsRedirection();
 
