@@ -30,13 +30,13 @@ namespace FeedTrac.Server.Database
                 .HasOne(um => um.User)
                 .WithMany(u => u.UserModules) // Assuming a collection exists in ApplicationUser
                 .HasForeignKey(um => um.UserId)
-                .OnDelete(DeleteBehavior.Restrict); // Optional, specify cascade or restrict
+                .OnDelete(DeleteBehavior.Cascade); // Optional, specify cascade or restrict
 
             builder.Entity<UserModule>()
                 .HasOne(um => um.Module)
                 .WithMany(m => m.UserModules) // Assuming a collection exists in Module
                 .HasForeignKey(um => um.ModuleId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
     }
