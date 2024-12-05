@@ -28,7 +28,7 @@ public class ModuleService
 
     public async Task<Module> GetModuleAsync(int id)
     {
-        var module = await _context.Modules.Where(m => m.Id == id).FirstOrDefaultAsync();
+        var module = await _context.Modules.Where(m => m.Id == id).Include(m => m.UserModules).FirstOrDefaultAsync();
         if (module == null)
             throw new Exception("Module not found.");
 
