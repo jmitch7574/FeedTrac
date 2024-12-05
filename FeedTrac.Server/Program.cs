@@ -32,6 +32,7 @@ namespace FeedTrac.Server
             options.UseNpgsql(builder.Configuration.GetConnectionString("database")));
             builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<ModuleService>();
+            builder.Services.AddScoped<FeedbackService>();
 
             var app = builder.Build();
 

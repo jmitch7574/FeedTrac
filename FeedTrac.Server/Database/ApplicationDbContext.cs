@@ -8,6 +8,7 @@ namespace FeedTrac.Server.Database
     {
         public DbSet<Module> Modules { get; set; }
         public DbSet<UserModule> UserModules { get; set; }
+        public DbSet<FeedbackTicket> FeedbackTicket { get; set; }
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
             
