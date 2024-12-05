@@ -67,4 +67,24 @@ public class ModuleService
         await _context.SaveChangesAsync();
         return newModule;
     }
+
+    public async Task DeleteModuleAsync(int moduleId)
+    {
+        Module targetModule = await GetModuleAsync(moduleId);
+
+        UserModule moduleOwner = targetModule.UserModules.FirstOrDefault(u => u.Role == 0);
+
+        if (moduleOwner == null)
+            throw new Exception("Could not get Module Owner, somehow"); // This should never happen in prod lol
+
+        string? idOfOwner = moduleOwner.UserId;
+
+        // Check user is owner of module
+        if (_userService.GetCurrentUserId() != targetModule.UserModules.FirstOrDefault(u => u.Role == 0).UserId)
+            throw new Exception("User is not owner of module");
+
+        _context.Modules.Remove(targetModule);
+        await _context.SaveChangesAsync();
+        return;
+    }
 }

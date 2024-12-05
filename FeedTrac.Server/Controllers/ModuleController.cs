@@ -67,6 +67,20 @@ public class ModuleController : Controller
         }
     }
 
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteModule(int id)
+    {
+        try
+        {
+            await _moduleService.DeleteModuleAsync(id);
+            return Ok("Module deleted");
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }   
+    }
+
     [HttpPost]
     [Route("create")]
     public async Task<IActionResult> CreateModule(string name)
