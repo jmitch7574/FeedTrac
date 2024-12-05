@@ -22,5 +22,8 @@ public class Module
     [JsonIgnore]
     public List<UserModule> UserModules { get; set; } = new();
 
+    [JsonIgnore]
+    public List<FeedbackTicket> Tickets { get; set; } = new();
+
 
 }

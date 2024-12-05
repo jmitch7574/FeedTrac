@@ -37,6 +37,19 @@ namespace FeedTrac.Server.Database
                 .WithMany(m => m.UserModules) // Assuming a collection exists in Module
                 .HasForeignKey(um => um.ModuleId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<FeedbackTicket>()
+                .HasOne(um => um.Owner)
+                .WithMany(m => m.Tickets) // Assuming a collection exists in Module
+                .HasForeignKey(um => um.OwnerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
+            builder.Entity<FeedbackTicket>()
+                .HasOne(um => um.Module)
+                .WithMany(m => m.Tickets) // Assuming a collection exists in Module
+                .HasForeignKey(um => um.ModuleId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
     }

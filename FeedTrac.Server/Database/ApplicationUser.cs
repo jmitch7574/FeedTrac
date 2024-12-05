@@ -19,5 +19,8 @@ namespace FeedTrac.Server.Database
 
         [JsonIgnore]
         public virtual List<UserModule> UserModules { get; set; } = new();
+
+        [JsonIgnore]
+        public virtual List<FeedbackTicket> Tickets { get; set; } = new();
     }
 }
