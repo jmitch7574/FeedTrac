@@ -35,6 +35,22 @@ public class ModuleService
         return module;
     }
 
+    public async Task<Module> JoinModule(string joinCode)
+    {
+        var userId = _userService.GetCurrentUserId();
+        var module = await _context.Modules.Where(m => m.JoinCode == joinCode).FirstOrDefaultAsync();
+        if (module == null)
+            throw new Exception("Module not found.");
+
+        module.UserModules.Add(new UserModule
+        {
+            UserId = userId,
+            Role = 2
+        });
+        await _context.SaveChangesAsync();
+        return module;
+    }
+
     public async Task<Module> CreateModuleAsync(string ModuleName)
     {
         Module newModule = new Module

@@ -34,6 +34,25 @@ public class ModuleController : Controller
         }
     }
 
+
+    [HttpPost]
+    [Route("join")]
+    public async Task<IActionResult> JoinModule(string joinCode)
+    {
+        if (_userService.GetCurrentUserId() == null)
+            return Unauthorized("You must be signed in to join a module");
+
+        try
+        {
+            var module = await _moduleService.JoinModule(joinCode);
+            return Ok(module);
+        }
+        catch(Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetModule(int id)
     {
