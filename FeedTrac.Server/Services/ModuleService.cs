@@ -51,6 +51,11 @@ public class ModuleService
         return module;
     }
 
+    public async Task<Module> RenameModule(int moduleId, string newName)
+    {
+        return new Module();
+    }
+
     public async Task<Module> CreateModuleAsync(string ModuleName)
     {
         Module newModule = new Module

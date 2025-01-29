@@ -33,6 +33,7 @@ namespace FeedTrac.Server
             builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<ModuleService>();
             builder.Services.AddScoped<FeedbackService>();
+            builder.Services.AddScoped<UserManager<ApplicationUser>, FeedTracUserManager>();
 
             var app = builder.Build();
 
