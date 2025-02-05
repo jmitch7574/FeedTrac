@@ -26,6 +26,13 @@ namespace FeedTrac.Server.Database
                 .Ignore(c => c.LockoutEnabled)
                 .Ignore(c => c.AccessFailedCount);
 
+            builder.Entity<ApplicationUser>()
+                .Property(e => e.FirstName)
+                .HasMaxLength(250);
+
+            builder.Entity<ApplicationUser>()
+                .Property(e => e.LastName)
+                .HasMaxLength(250);
 
             builder.Entity<UserModule>()
                 .HasOne(um => um.User)

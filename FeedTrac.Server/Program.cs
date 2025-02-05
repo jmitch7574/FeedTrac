@@ -1,4 +1,5 @@
 
+using FeedTrac.Overrides;
 using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using FeedTrac.Server.Services;
@@ -20,6 +21,9 @@ namespace FeedTrac.Server
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseNpgsql(builder.Configuration.GetConnectionString("database")));
+
             // Establish Connection to SQL Server
             builder.Services.AddAuthorization();
             builder.Services.AddAuthentication().AddCookie(IdentityConstants.ApplicationScheme);
@@ -28,8 +32,6 @@ namespace FeedTrac.Server
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddApiEndpoints();
 
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString("database")));
             builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<ModuleService>();
             builder.Services.AddScoped<FeedbackService>();
@@ -49,7 +51,7 @@ namespace FeedTrac.Server
                 app.ApplyMigrations();
             }
 
-            app.MapIdentityApi<ApplicationUser>();
+            app.FeedTracMapIdentityApi<ApplicationUser>();
 
             app.UseHttpsRedirection();
 
