@@ -10,6 +10,10 @@
 *.userosscache
 *.sln.docstates
 
+# Auto generated documentation
+FeedTrac.Server/[Dd]ocs/docs.xml
+FeedTrac.Server/[Dd]ocs/Doxygen/
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
@@ -32,7 +36,6 @@ bld/
 [Oo]ut/
 [Ll]og/
 [Ll]ogs/
-[Dd]ocs/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
