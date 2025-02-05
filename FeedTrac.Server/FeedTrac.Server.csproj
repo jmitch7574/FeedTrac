@@ -7,6 +7,8 @@
     <SpaRoot>..\feedtrac.client</SpaRoot>
     <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
     <SpaProxyServerUrl>https://localhost:5173</SpaProxyServerUrl>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <DocumentationFile>C:\Users\Jake\source\repos\FeedTrac\FeedTrac.Server\Docs\docs.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
