@@ -21,9 +21,11 @@ using Microsoft.AspNetCore.Identity.Data;
 
 namespace FeedTrac.Controllers
 {
+    /// <summary>
+    /// A set of endpoints for managing user sign-ins and sign-ups
+    /// </summary>
     [ApiController]
     [Route("identity")]
-
     public class IdentityController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -42,7 +44,14 @@ namespace FeedTrac.Controllers
             _bearerTokenOptions = bearerTokenOptions;
         }
 
-        [HttpPost("register")]
+        /// <summary>
+        /// API Endpoint for registring a student
+        /// </summary>
+        /// <param name="request">The request body supplied, includes email, password, firstname and lastname</param>
+        /// <returns>
+        ///     <b>200:</b> Tje User Successfully registered<br/>
+        ///     <b>400:</b> Failed to register user <br/>
+        [HttpPost("student/register")]
         public async Task<IActionResult> Register([FromBody] FeedTracRegisterRequest request)
         {
             var user = new ApplicationUser { UserName = request.Email, Email = request.Email, FirstName = request.FirstName, LastName = request.LastName };
@@ -60,7 +69,12 @@ namespace FeedTrac.Controllers
             return Ok();
         }
 
-        [HttpPost("login")]
+        /// <summary>
+        /// API Endpoint for logging in a student
+        /// </summary>
+        /// <param name="login"></param>
+        /// <returns></returns>
+        [HttpPost("student/login")]
         public async Task<IActionResult> Login([FromBody] FeedTracLoginRequest login)
         {
             var result = await _signInManager.PasswordSignInAsync(login.Email, login.Password, false, lockoutOnFailure: true);
