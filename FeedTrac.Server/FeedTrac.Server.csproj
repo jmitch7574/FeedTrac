@@ -32,4 +32,8 @@
     </ProjectReference>
   </ItemGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="doxygen $(ProjectDir)/Docs/Doxyfile" />
+  </Target>
+
 </Project>

@@ -4,16 +4,34 @@ using System.Reflection.Emit;
 
 namespace FeedTrac.Server.Database
 {
+    /// <summary>
+    /// The Database context of FeedTrac
+    /// </summary>
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
+        /// <summary>
+        /// The modules table
+        /// </summary>
         public DbSet<Module> Modules { get; set; }
+
+        /// <summary>
+        /// The user-to-modules table
+        /// </summary>
         public DbSet<UserModule> UserModules { get; set; }
+
+        /// <summary>
+        /// The feedback tickets table
+        /// </summary>
         public DbSet<FeedbackTicket> FeedbackTicket { get; set; }
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
             
         }
 
+        /// <summary>
+        /// Configures the database schema
+        /// </summary>
+        /// <param name="builder">The model builder</param>
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
