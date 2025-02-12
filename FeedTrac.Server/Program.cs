@@ -1,5 +1,4 @@
 
-using FeedTrac.Overrides;
 using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using FeedTrac.Server.Services;
@@ -50,9 +49,8 @@ namespace FeedTrac.Server
                 app.ApplyMigrations();
             }
 
-            app.FeedTracMapIdentityApi<ApplicationUser>();
-
             app.UseHttpsRedirection();
+            app.MapControllers();
 
             app.UseAuthorization();
 
