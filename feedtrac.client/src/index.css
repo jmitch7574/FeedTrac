@@ -50,6 +50,17 @@
   --sidebar-ring: oklch(0.87 0 0);
 }
 
+*,
+::before,
+::after {
+  box-sizing: border-box;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -61,10 +72,13 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+}
+
+html,
+body {
+  width: 100%;
 }
 
 h1 {
