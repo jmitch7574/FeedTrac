@@ -6,6 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 
 export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    console.log("Sign up form submitted successfully");
+  };
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -14,7 +19,7 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
           <CardDescription>Enter your details below to signup for an account</CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className='flex flex-col gap-6'>
               <div className='flex flex-row gap-2'>
                 <div className='grid gap-3'>
