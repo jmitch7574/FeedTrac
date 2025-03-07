@@ -14,6 +14,16 @@ export type studentLogin = {
   Email: string;
   Password: string;
 };
+// auth response type
+export type AuthResponse = {
+  token: string;
+  refreshToken: string;
+  user: {
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+};
 
 // password related endpoints
 // forgot password request type

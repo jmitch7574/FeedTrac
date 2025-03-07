@@ -1,16 +1,16 @@
 const APIKey = import.meta.env.VITE_API_KEY;
-import { ForgotPasswordRequest, RefreshRequest, RefreshResponse, ResetPasswordRequest, studentLogin, studentRegister } from "@/types";
+import { AuthResponse, ForgotPasswordRequest, RefreshRequest, RefreshResponse, ResetPasswordRequest, studentLogin, studentRegister } from "@/types";
 import axios from "axios";
 
 // auth for students
 // register endpoint for students
-export const registerUser = async (data: studentRegister): Promise<{ token: string }> => {
+export const registerUser = async (data: studentRegister): Promise<AuthResponse> => {
   const response = await axios.post(`${APIKey}/student/register`, data);
   return response.data;
 };
 
 // login endpoint for students
-export const loginUser = async (data: studentLogin) => {
+export const loginUser = async (data: studentLogin): Promise<AuthResponse> => {
   const response = await axios.post(`${APIKey}/student/login`, data);
   return response.data;
 };
