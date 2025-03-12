@@ -2,6 +2,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using OtpNet;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using NuGet.Common;
 
 namespace FeedTrac.Server.Database
 {
@@ -37,5 +40,20 @@ namespace FeedTrac.Server.Database
         /// </summary>
         [JsonIgnore]
         public virtual List<FeedbackTicket> Tickets { get; set; } = new();
+
+        [JsonIgnore]
+        [Column(TypeName = "char(32)")]
+        public string TwoFactorSecret { get; set; } = Base32Encoding.ToString(KeyGeneration.GenerateRandomKey(20));
+
+        // Convert to Base32 for Google Authenticator
+        [NotMapped] // Prevents EF from persisting this field
+        public override bool TwoFactorEnabled { get; set; }
+
+        public bool Confirm2FAToken(string token)
+        {
+            var otp = new Totp(Base32Encoding.ToBytes(this.TwoFactorSecret), step: 30, mode: OtpHashMode.Sha1);
+            return otp.VerifyTotp(token, out _);
+        }
     }
 }
+

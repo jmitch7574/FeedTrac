@@ -11,7 +11,7 @@ namespace Microsoft.AspNetCore.Identity.Data;
 /// <summary>
 /// The request type for the "/login" endpoint added by <see cref="IdentityApiEndpointRouteBuilderExtensions.MapIdentityApi"/>.
 /// </summary>
-public class FeedTracLoginRequest
+public class RegisterUserRequest
 {
     /// <summary>
     /// The user's email address which acts as a user name.
@@ -24,14 +24,12 @@ public class FeedTracLoginRequest
     public required string Password { get; init; }
 
     /// <summary>
-    /// The optional two-factor authenticator code. This may be required for users who have enabled two-factor authentication.
-    /// This is not required if a <see cref="TwoFactorRecoveryCode"/> is sent.
+    /// The user's First Name
     /// </summary>
-    public string? TwoFactorCode { get; init; }
+    public required string FirstName { get; init; }
 
     /// <summary>
-    /// An optional two-factor recovery code from <see cref="TwoFactorResponse.RecoveryCodes"/>.
-    /// This is required for users who have enabled two-factor authentication but lost access to their <see cref="TwoFactorCode"/>.
+    /// The user's Last Name
     /// </summary>
-    public string? TwoFactorRecoveryCode { get; init; }
+    public required string LastName { get; init; }
 }

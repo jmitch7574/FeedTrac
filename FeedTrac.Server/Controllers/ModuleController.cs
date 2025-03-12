@@ -1,5 +1,6 @@
 ﻿using FeedTrac.Server.Database;
 using FeedTrac.Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FeedTrac.Server.Controllers;

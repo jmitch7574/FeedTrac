@@ -18,6 +18,9 @@ using System.Threading.Tasks;
 using System.Linq;
 using FeedTrac.Server.Database;
 using Microsoft.AspNetCore.Identity.Data;
+using FeedTrac.Server.Models.Forms;
+using Microsoft.AspNetCore.Authorization;
+using FeedTrac.Server.Services;
 
 namespace FeedTrac.Controllers
 {
@@ -52,7 +55,23 @@ namespace FeedTrac.Controllers
         ///     <b>200:</b> Tje User Successfully registered<br/>
         ///     <b>400:</b> Failed to register user <br/>
         [HttpPost("student/register")]
-        public async Task<IActionResult> Register([FromBody] FeedTracRegisterRequest request)
+        public async Task<IActionResult> RegisterStudent([FromBody] RegisterUserRequest request)
+        {
+            var user = new ApplicationUser { UserName = request.Email, Email = request.Email, FirstName = request.FirstName, LastName = request.LastName };
+            var result = await _userManager.CreateAsync(user, request.Password);
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
+            await _userManager.AddToRoleAsync(user, "Student");
+
+            return Ok();
+        }
+
+        [HttpPost("teacher/register")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> RegisterTeacher([FromBody] RegisterUserRequest request)
         {
             var user = new ApplicationUser { UserName = request.Email, Email = request.Email, FirstName = request.FirstName, LastName = request.LastName };
             var result = await _userManager.CreateAsync(user, request.Password);
@@ -62,11 +81,22 @@ namespace FeedTrac.Controllers
                 return BadRequest(result.Errors);
             }
 
-            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-            await _emailSender.SendConfirmationLinkAsync(user, user.Email, HtmlEncoder.Default.Encode(code));
+            // Enable two-factor authentication
+            user.TwoFactorEnabled = true;
 
-            return Ok();
+            // Reset the authenticator key to generate a new one
+            await _userManager.ResetAuthenticatorKeyAsync(user);
+
+            // Get the key after resetting it
+            var key = await _userManager.GetAuthenticatorKeyAsync(user);
+
+            // Update the user with the changes
+            await _userManager.UpdateAsync(user);
+
+            // Add user to the Teacher role (was incorrectly adding to Student role)
+            await _userManager.AddToRoleAsync(user, "Teacher");
+
+            return Ok(key);
         }
 
         /// <summary>
@@ -75,16 +105,66 @@ namespace FeedTrac.Controllers
         /// <param name="login"></param>
         /// <returns></returns>
         [HttpPost("student/login")]
-        public async Task<IActionResult> Login([FromBody] FeedTracLoginRequest login)
+        public async Task<IActionResult> StudentLogin([FromBody] StudentLoginRequest login)
         {
-            var result = await _signInManager.PasswordSignInAsync(login.Email, login.Password, false, lockoutOnFailure: true);
-            if (!result.Succeeded)
+
+            var user = await _userManager.FindByEmailAsync(login.Email);
+            if (user == null) return Unauthorized("User not found");
+
+            // Check user role before allowing login
+            var roles = await _userManager.GetRolesAsync(user);
+            if (!roles.Contains("Student")) // Change condition as needed
             {
-                return Unauthorized();
+                return Forbid("This endpoint is for student accounts only");
             }
+
+            var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
+            if (!result.Succeeded) return Unauthorized("Invalid credentials");
+
+            await _signInManager.SignInAsync(user, isPersistent: login.RememberMe);
             return Ok();
         }
 
+        /// <summary>
+        /// API Endpoint for logging in a teacher
+        /// </summary>
+        /// <param name="login"></param>
+        /// <returns></returns>
+        [HttpPost("teacher/login")]
+        public async Task<IActionResult> TeacherLogin([FromBody] TeacherLoginRequest login)
+        {
+            var user = await _userManager.FindByEmailAsync(login.Email);
+            if (user == null) return Unauthorized("User not found");
+
+            // Check user role before allowing login
+            var roles = await _userManager.GetRolesAsync(user);
+            if (!roles.Contains("Teacher") && !roles.Contains("Admin")) // Change condition as needed
+            {
+                return Unauthorized("Not a teacher account");
+            }
+
+
+            var isValid = user.Confirm2FAToken(login.TwoFactorCode);
+
+            if (!isValid)
+            {
+                var key = await _userManager.GetAuthenticatorKeyAsync(user);
+                return Unauthorized($"Invalid two-factor code");
+            }
+
+
+            var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
+            if (!result.Succeeded) return Unauthorized("Invalid credentials");
+
+            await _signInManager.SignInAsync(user, isPersistent: false);
+            return Ok();
+        }
+
+        /// <summary>
+        /// Refreshes the user's token
+        /// </summary>
+        /// <param name="refreshRequest">Refresh request containing the refresh token</param>
+        /// <returns></returns>
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh([FromBody] RefreshRequest refreshRequest)
         {
@@ -98,6 +178,11 @@ namespace FeedTrac.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Forgot password endpoint - not implemented currently
+        /// </summary>
+        /// <param name="request">Forgot password request containing the users email</param>
+        /// <returns></returns>
         [HttpPost("forgotPassword")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
@@ -111,6 +196,11 @@ namespace FeedTrac.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Endpoint for resetting the user's password
+        /// </summary>
+        /// <param name="request">Reset password request containing the user's email, reset code, and new password</param>
+        /// <returns></returns>
         [HttpPost("resetPassword")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
