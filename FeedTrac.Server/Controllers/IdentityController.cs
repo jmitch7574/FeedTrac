@@ -21,6 +21,8 @@ using Microsoft.AspNetCore.Identity.Data;
 using FeedTrac.Server.Models.Forms;
 using Microsoft.AspNetCore.Authorization;
 using FeedTrac.Server.Services;
+using FeedTrac.Server.Models.Responses.Identity;
+using OtpNet;
 
 namespace FeedTrac.Controllers
 {
@@ -69,8 +71,8 @@ namespace FeedTrac.Controllers
             return Ok();
         }
 
-        [HttpPost("teacher/register")]
         [Authorize(Roles = "Admin")]
+        [HttpPost("teacher/register")]
         public async Task<IActionResult> RegisterTeacher([FromBody] RegisterUserRequest request)
         {
             var user = new ApplicationUser { UserName = request.Email, Email = request.Email, FirstName = request.FirstName, LastName = request.LastName };
@@ -84,19 +86,22 @@ namespace FeedTrac.Controllers
             // Enable two-factor authentication
             user.TwoFactorEnabled = true;
 
-            // Reset the authenticator key to generate a new one
-            await _userManager.ResetAuthenticatorKeyAsync(user);
+            byte[] secretKey = KeyGeneration.GenerateRandomKey(20); // 20 bytes (160 bits)
+            string key = Base32Encoding.ToString(secretKey);
 
-            // Get the key after resetting it
-            var key = await _userManager.GetAuthenticatorKeyAsync(user);
-
-            // Update the user with the changes
-            await _userManager.UpdateAsync(user);
+            user.TwoFactorSecret = key;
 
             // Add user to the Teacher role (was incorrectly adding to Student role)
             await _userManager.AddToRoleAsync(user, "Teacher");
 
-            return Ok(key);
+            // Update the user with the changes
+            await _userManager.UpdateAsync(user);
+
+            RegisteredTeacher response = new RegisteredTeacher
+            {
+                TwoFactorKey = key
+            };
+            return Ok(response);
         }
 
         /// <summary>
@@ -156,7 +161,7 @@ namespace FeedTrac.Controllers
             var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
             if (!result.Succeeded) return Unauthorized("Invalid credentials");
 
-            await _signInManager.SignInAsync(user, isPersistent: false);
+            await _signInManager.SignInAsync(user, isPersistent: login.RememberMe);
             return Ok();
         }
 
@@ -207,7 +212,7 @@ namespace FeedTrac.Controllers
             var user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null)
             {
-                return BadRequest("Invalid user.");
+                return BadRequest("Could not find user.");
             }
             var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.ResetCode));
             var result = await _userManager.ResetPasswordAsync(user, code, request.NewPassword);

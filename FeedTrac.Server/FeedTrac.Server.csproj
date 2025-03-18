@@ -33,10 +33,6 @@
     </ProjectReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Models\Responses\" />
-  </ItemGroup>
-
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="doxygen $(ProjectDir)/Docs/Doxyfile" />
   </Target>
