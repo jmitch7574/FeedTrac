@@ -38,6 +38,13 @@ namespace FeedTrac.Controllers
         private readonly IEmailSender<ApplicationUser> _emailSender;
         private readonly IOptionsMonitor<BearerTokenOptions> _bearerTokenOptions;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="userManager"></param>
+        /// <param name="signInManager"></param>
+        /// <param name="emailSender"></param>
+        /// <param name="bearerTokenOptions"></param>
         public IdentityController(UserManager<ApplicationUser> userManager,
                                   SignInManager<ApplicationUser> signInManager,
                                   IEmailSender<ApplicationUser> emailSender,
@@ -52,10 +59,11 @@ namespace FeedTrac.Controllers
         /// <summary>
         /// API Endpoint for registring a student
         /// </summary>
-        /// <param name="request">The request body supplied, includes email, password, firstname and lastname</param>
+        /// <param name="request">Body request containing the Registration information <see cref="RegisterUserRequest"/></param>
         /// <returns>
-        ///     <b>200:</b> Tje User Successfully registered<br/>
+        ///     <b>200:</b> Tjh User Successfully registered<br/>
         ///     <b>400:</b> Failed to register user <br/>
+        /// </returns>
         [HttpPost("student/register")]
         public async Task<IActionResult> RegisterStudent([FromBody] RegisterUserRequest request)
         {
@@ -71,6 +79,14 @@ namespace FeedTrac.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Endpoint for registering a teacher
+        /// </summary>
+        /// <param name="request">Body request containing the Registration information <see cref="RegisterUserRequest"/></param>
+        /// <returns>
+        ///     <b>200:</b> The User Successfully registered<br/>
+        ///     <b>400:</b> Failed to register user <br/>
+        /// </returns>
         [Authorize(Roles = "Admin")]
         [HttpPost("teacher/register")]
         public async Task<IActionResult> RegisterTeacher([FromBody] RegisterUserRequest request)

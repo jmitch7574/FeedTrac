@@ -25,8 +25,7 @@ public class TeacherLoginRequest
     public required string Password { get; init; }
 
     /// <summary>
-    /// The optional two-factor authenticator code. This may be required for users who have enabled two-factor authentication.
-    /// This is not required if a <see cref="TwoFactorRecoveryCode"/> is sent.
+    /// The Two factor code used to validate the sign in request
     /// </summary>
     public required string TwoFactorCode { get; init; }
 

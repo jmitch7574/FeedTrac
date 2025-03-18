@@ -11,6 +11,9 @@ using System.Runtime.ConstrainedExecution;
 
 namespace FeedTrac.Server
 {
+    /// <summary>
+    /// The entry class of the project
+    /// </summary>
     public class Program
     {
         /// <summary>
@@ -76,6 +79,11 @@ namespace FeedTrac.Server
             await userManager.UpdateAsync(admin);
         }
 
+        /// <summary>
+        /// Entry point of the program
+        /// </summary>
+        /// <param name="args">Command line arguments</param>
+        /// <returns></returns>
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
