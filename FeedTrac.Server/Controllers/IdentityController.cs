@@ -166,24 +166,6 @@ namespace FeedTrac.Controllers
         }
 
         /// <summary>
-        /// Refreshes the user's token
-        /// </summary>
-        /// <param name="refreshRequest">Refresh request containing the refresh token</param>
-        /// <returns></returns>
-        [HttpPost("refresh")]
-        public async Task<IActionResult> Refresh([FromBody] RefreshRequest refreshRequest)
-        {
-            var refreshTokenProtector = _bearerTokenOptions.Get(IdentityConstants.BearerScheme).RefreshTokenProtector;
-            var refreshTicket = refreshTokenProtector.Unprotect(refreshRequest.RefreshToken);
-
-            if (refreshTicket == null)
-            {
-                return Unauthorized();
-            }
-            return Ok();
-        }
-
-        /// <summary>
         /// Forgot password endpoint - not implemented currently
         /// </summary>
         /// <param name="request">Forgot password request containing the users email</param>
