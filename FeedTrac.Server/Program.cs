@@ -2,14 +2,89 @@
 using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using FeedTrac.Server.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using OtpNet;
+using System.Runtime.ConstrainedExecution;
 
 namespace FeedTrac.Server
 {
+    /// <summary>
+    /// The entry class of the project
+    /// </summary>
     public class Program
     {
-        public static void Main(string[] args)
+        /// <summary>
+        /// Create our custom roles
+        /// </summary>
+        /// <param name="serviceProvider">Service provider made in main</param>
+        /// <returns></returns>
+        async static Task CreateRolesAsync(IServiceProvider serviceProvider)
+        {
+            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            string[] roleNames = { "Teacher", "Admin", "Student" };
+            foreach (var roleName in roleNames)
+            {
+                bool roleExists = await roleManager.RoleExistsAsync(roleName);
+                if (!roleExists)
+                {
+                    await roleManager.CreateAsync(new IdentityRole(roleName));
+                }
+            }
+        }
+
+
+        async static Task CreateDefaultAdministrator(IServiceProvider serviceProvider)
+        {
+            var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            var admin = await userManager.FindByEmailAsync("feedtrac-admin@lincoln.ac.uk");
+            if (admin != null)
+            {
+                return;
+            }
+
+            admin = new ApplicationUser
+            {
+                UserName = "feedtrac-admin@lincoln.ac.uk",
+                FirstName = "Admin",
+                LastName = "Admin",
+                Email = "feedtrac-admin@lincoln.ac.uk"
+            };
+
+
+
+            // Generate and manually set the key (e.g., store in DB)
+            var key = "VMNAYBBTP4PHHMNF53O2W5UGRJDD442G";
+
+            var result = await userManager.CreateAsync(admin, "Password123!");
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    Console.WriteLine(error.Description);
+                }
+                return;
+            }
+
+
+            await userManager.AddToRoleAsync(admin, "Admin");
+            admin.TwoFactorSecret = key;
+
+
+            await userManager.UpdateAsync(admin);
+        }
+
+        /// <summary>
+        /// Entry point of the program
+        /// </summary>
+        /// <param name="args">Command line arguments</param>
+        /// <returns></returns>
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -20,13 +95,14 @@ namespace FeedTrac.Server
             builder.Services.AddSwaggerGen();
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString("database")));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("database")));
 
             // Establish Connection to SQL Server
             builder.Services.AddAuthorization();
             builder.Services.AddAuthentication().AddCookie(IdentityConstants.ApplicationScheme);
 
             builder.Services.AddIdentityCore<ApplicationUser>()
+                .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddApiEndpoints();
 
@@ -34,6 +110,13 @@ namespace FeedTrac.Server
             builder.Services.AddScoped<ModuleService>();
             builder.Services.AddScoped<FeedbackService>();
             builder.Services.AddScoped<UserManager<ApplicationUser>, FeedTracUserManager>();
+
+            builder.Services.Configure<IdentityOptions>(options =>
+            {
+                options.SignIn.RequireConfirmedEmail = false; // Optional
+                options.SignIn.RequireConfirmedPhoneNumber = false; // Optional
+                options.Tokens.AuthenticatorTokenProvider = default; // Remove 2FA providers
+            });
 
             var app = builder.Build();
 
@@ -55,6 +138,14 @@ namespace FeedTrac.Server
             app.UseAuthorization();
 
             app.MapFallbackToFile("/index.html");
+
+            // Ensure roles exist
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                await CreateRolesAsync(services);
+                await CreateDefaultAdministrator(services);
+            }
 
             app.Run();
         }

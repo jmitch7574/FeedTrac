@@ -39,10 +39,10 @@ namespace FeedTrac.Server.Database
             builder.HasDefaultSchema("feedtrac");
             builder.Entity<ApplicationUser>().Ignore(c => c.EmailConfirmed)
                 .Ignore(c => c.PhoneNumberConfirmed)
-                .Ignore(c => c.TwoFactorEnabled)
                 .Ignore(c => c.LockoutEnd)
                 .Ignore(c => c.LockoutEnabled)
-                .Ignore(c => c.AccessFailedCount);
+                .Ignore(c => c.AccessFailedCount)
+                .Ignore(c => c.TwoFactorEnabled);
 
             builder.Entity<ApplicationUser>()
                 .Property(e => e.FirstName)

@@ -4,14 +4,15 @@
 // MODIFIED BY JAKE MITCHELL FOR THE PURPOSES OF THE FEEDTRAC PROJECT
 // WOULD HAVE LOVED TO JUST DO AN INHERITANCE THING BUT THE IDENTITY API IS SEALED
 
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Routing;
 
-namespace Microsoft.AspNetCore.Identity.Data;
+namespace FeedTrac.Server.Models.Forms;
 
 /// <summary>
 /// The request type for the "/login" endpoint added by <see cref="IdentityApiEndpointRouteBuilderExtensions.MapIdentityApi"/>.
 /// </summary>
-public class FeedTracLoginRequest
+public class TeacherLoginRequest
 {
     /// <summary>
     /// The user's email address which acts as a user name.
@@ -24,14 +25,12 @@ public class FeedTracLoginRequest
     public required string Password { get; init; }
 
     /// <summary>
-    /// The optional two-factor authenticator code. This may be required for users who have enabled two-factor authentication.
-    /// This is not required if a <see cref="TwoFactorRecoveryCode"/> is sent.
+    /// The Two factor code used to validate the sign in request
     /// </summary>
-    public string? TwoFactorCode { get; init; }
+    public required string TwoFactorCode { get; init; }
 
     /// <summary>
-    /// An optional two-factor recovery code from <see cref="TwoFactorResponse.RecoveryCodes"/>.
-    /// This is required for users who have enabled two-factor authentication but lost access to their <see cref="TwoFactorCode"/>.
+    /// An optional parameter to indicate if the user's session should be remembered across browser restarts.
     /// </summary>
-    public string? TwoFactorRecoveryCode { get; init; }
+    public bool RememberMe { get; init; } = false;
 }
