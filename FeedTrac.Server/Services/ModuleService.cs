@@ -26,7 +26,7 @@ public class ModuleService
         if (userId == null)
             throw new Exception("User is not logged in.");
 
-        return await _context.Modules.Where(m => m.StudentModule.Any(u => u.User.Id == userId)).ToListAsync();
+        return await _context.Modules.Where(m => m.StudentModule.Any(u => u.User.Id == userId) || m.TeacherModule.Any(u => u.User.Id == userId)).ToListAsync();
     }
 
     public async Task<Module> GetModuleAsync(int id)
@@ -80,8 +80,6 @@ public class ModuleService
         return newModule;
     }
 
-    [HttpDelete("/{moduleId}")]
-    [Authorize(Roles = "Admin")]
     public async Task DeleteModuleAsync(int moduleId)
     {
         Module targetModule = await GetModuleAsync(moduleId);
