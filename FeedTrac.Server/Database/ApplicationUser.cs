@@ -33,7 +33,13 @@ namespace FeedTrac.Server.Database
         /// A list of modules that the user has access to
         /// </summary>
         [JsonIgnore]
-        public virtual List<UserModule> UserModules { get; set; } = new();
+        public virtual List<StudentModule> EnrolledModules { get; set; } = new();
+
+        /// <summary>
+        /// A list of modules that the user has access to
+        /// </summary>
+        [JsonIgnore]
+        public virtual List<TeacherModule> TeachingModules { get; set; } = new();
 
         /// <summary>
         /// A list of tickets that the user has created

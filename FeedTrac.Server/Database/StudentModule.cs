@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 /// <summary>
 /// A class that contains the relationship between a user and a module
 /// </summary>
-public class UserModule
+public class StudentModule
 {
     /// <summary>
     /// The unique identifier for this user-to-module relationship
@@ -40,10 +40,4 @@ public class UserModule
     /// </summary>
     [ForeignKey(nameof(ModuleId))]
     public Module Module { get; set; }
-
-    /// <summary>
-    /// The role of the user within this module
-    /// </summary>
-    public int Role { get; set; }
-
 }

@@ -2,6 +2,7 @@
 using FeedTrac.Server.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -10,9 +11,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FeedTrac.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250407162827_moduleChanges")]
+    partial class moduleChanges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -131,7 +134,7 @@ namespace FeedTrac.Server.Migrations
                     b.ToTable("Modules", "feedtrac");
                 });
 
-            modelBuilder.Entity("FeedTrac.Server.Database.StudentModule", b =>
+            modelBuilder.Entity("FeedTrac.Server.Database.UserModule", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -142,28 +145,7 @@ namespace FeedTrac.Server.Migrations
                     b.Property<int>("ModuleId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ModuleId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("StudentModule", "feedtrac");
-                });
-
-            modelBuilder.Entity("FeedTrac.Server.Database.TeacherModule", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ModuleId")
+                    b.Property<int?>("ModuleId1")
                         .HasColumnType("integer");
 
                     b.Property<string>("UserId")
@@ -174,9 +156,11 @@ namespace FeedTrac.Server.Migrations
 
                     b.HasIndex("ModuleId");
 
+                    b.HasIndex("ModuleId1");
+
                     b.HasIndex("UserId");
 
-                    b.ToTable("TeacherModule", "feedtrac");
+                    b.ToTable("UserModule", "feedtrac");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -330,7 +314,7 @@ namespace FeedTrac.Server.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("FeedTrac.Server.Database.StudentModule", b =>
+            modelBuilder.Entity("FeedTrac.Server.Database.UserModule", b =>
                 {
                     b.HasOne("FeedTrac.Server.Database.Module", "Module")
                         .WithMany("StudentModule")
@@ -338,27 +322,12 @@ namespace FeedTrac.Server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FeedTrac.Server.Database.ApplicationUser", "User")
-                        .WithMany("EnrolledModules")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Module");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("FeedTrac.Server.Database.TeacherModule", b =>
-                {
-                    b.HasOne("FeedTrac.Server.Database.Module", "Module")
+                    b.HasOne("FeedTrac.Server.Database.Module", null)
                         .WithMany("TeacherModule")
-                        .HasForeignKey("ModuleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ModuleId1");
 
                     b.HasOne("FeedTrac.Server.Database.ApplicationUser", "User")
-                        .WithMany("TeachingModules")
+                        .WithMany("Modules")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -421,9 +390,7 @@ namespace FeedTrac.Server.Migrations
 
             modelBuilder.Entity("FeedTrac.Server.Database.ApplicationUser", b =>
                 {
-                    b.Navigation("EnrolledModules");
-
-                    b.Navigation("TeachingModules");
+                    b.Navigation("Modules");
 
                     b.Navigation("Tickets");
                 });

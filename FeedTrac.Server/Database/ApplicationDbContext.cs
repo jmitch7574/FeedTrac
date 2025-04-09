@@ -15,9 +15,11 @@ namespace FeedTrac.Server.Database
         public DbSet<Module> Modules { get; set; }
 
         /// <summary>
-        /// The user-to-modules table
+        /// The student-to-modules table
         /// </summary>
-        public DbSet<UserModule> UserModules { get; set; }
+        public DbSet<StudentModule> StudentModules { get; set; }
+
+        public DbSet<StudentModule> TeacherModules { get; set; }
 
         /// <summary>
         /// The feedback tickets table
@@ -52,15 +54,28 @@ namespace FeedTrac.Server.Database
                 .Property(e => e.LastName)
                 .HasMaxLength(250);
 
-            builder.Entity<UserModule>()
+            builder.Entity<StudentModule>()
                 .HasOne(um => um.User)
-                .WithMany(u => u.UserModules) // Assuming a collection exists in ApplicationUser
+                .WithMany(u => u.EnrolledModules) // Assuming a collection exists in ApplicationUser
                 .HasForeignKey(um => um.UserId)
                 .OnDelete(DeleteBehavior.Cascade); // Optional, specify cascade or restrict
 
-            builder.Entity<UserModule>()
+            builder.Entity<StudentModule>()
                 .HasOne(um => um.Module)
-                .WithMany(m => m.UserModules) // Assuming a collection exists in Module
+                .WithMany(m => m.StudentModule) // Assuming a collection exists in Module
+                .HasForeignKey(um => um.ModuleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
+            builder.Entity<TeacherModule>()
+                .HasOne(um => um.User)
+                .WithMany(u => u.TeachingModules) // Assuming a collection exists in ApplicationUser
+                .HasForeignKey(um => um.UserId)
+                .OnDelete(DeleteBehavior.Cascade); // Optional, specify cascade or restrict
+
+            builder.Entity<TeacherModule>()
+                .HasOne(um => um.Module)
+                .WithMany(m => m.TeacherModule) // Assuming a collection exists in Module
                 .HasForeignKey(um => um.ModuleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
