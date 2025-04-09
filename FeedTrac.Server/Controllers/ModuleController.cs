@@ -1,7 +1,9 @@
 ﻿using FeedTrac.Server.Database;
 using FeedTrac.Server.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FeedTrac.Server.Controllers;
 
@@ -15,6 +17,7 @@ public class ModuleController : Controller
 
     private readonly ApplicationDbContext _context;
     private readonly UserService _userService;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ModuleService _moduleService;
 
     public ModuleController(ApplicationDbContext context, UserService userService, ModuleService moduleService)
@@ -35,7 +38,7 @@ public class ModuleController : Controller
     [HttpGet]
     [ProducesResponseType(typeof(List<Module>), 200)]
     [ProducesResponseType(401)]
-    public async Task<IActionResult> GetModules()
+    public async Task<IActionResult> GetUserModules()
     {
         try
         {
@@ -48,6 +51,14 @@ public class ModuleController : Controller
         }
     }
 
+    [HttpGet("all")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetAllModules()
+    {
+        var modules = await _context.Modules.ToListAsync();
+        return Ok(modules);
+    }
+
     /// <summary>
     /// API endpoint for joining the current user to a module
     /// </summary>
@@ -58,8 +69,8 @@ public class ModuleController : Controller
     ///     <b>400:</b> Failed to join the module <br/>
     ///     <b>401:</b> The user is not signed in <br/>
     /// </returns>
-    [HttpPost]
-    [Route("join")]
+    [HttpPost("join")]
+    [Authorize(Roles = "Student")]
     public async Task<IActionResult> JoinModule(string joinCode)
     {
         if (_userService.GetCurrentUserId() == null)
@@ -75,6 +86,54 @@ public class ModuleController : Controller
             return BadRequest(e.Message);
         }
     }
+
+    [HttpPost("/{moduleId}/assignTeacher/byTeacherId")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> AssignTeacherById(string moduleId, string teacherId)
+    {
+        var module = await _context.Modules.FirstOrDefaultAsync(m => m.Id == int.Parse(moduleId));
+        if (module == null)
+            return NotFound("Module not found");
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == teacherId);
+        if (user == null)
+            return NotFound("User not found");
+
+        module.TeacherModule.Add(new TeacherModule
+        {
+            UserId = user.Id,
+            ModuleId = module.Id
+        });
+
+        await _context.SaveChangesAsync();
+        return Ok("Teacher assigned");
+    }
+
+    [HttpPost("/{moduleId}/assignTeacher/byTeacherEmail")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> AssignTeacherByEmail(string moduleId, string teacherEmail)
+    {
+        var module = await _context.Modules.FirstOrDefaultAsync(m => m.Id == int.Parse(moduleId));
+        if (module == null)
+            return NotFound("Module not found");
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == teacherEmail);
+        if (user == null)
+            return NotFound("Teacher not found");
+        List<string> userRoles = (await _userManager.GetRolesAsync(user)).ToList();
+        if ((userRoles.Contains("Teacher") || userRoles.Contains("Admin")) == false)
+            return BadRequest("User is not a teacher");
+
+        module.TeacherModule.Add(new TeacherModule
+        {
+            UserId = user.Id,
+            ModuleId = module.Id
+        });
+
+        await _context.SaveChangesAsync();
+        return Ok("Teacher assigned");
+    }
+
 
     /// <summary>
     /// Get info about a module

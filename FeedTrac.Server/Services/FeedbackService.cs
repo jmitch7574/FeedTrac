@@ -63,8 +63,8 @@ public class FeedbackService
         // This LINQ statement should get feedback items that either
         // Belong to the currently signed in uesr
         // Belong to a module that the user is at least an instructor in (role 1)
-        List<FeedbackTicket> viewableTickets = await _context.FeedbackTicket.Where(f => f.OwnerId == currentUser.Id || f.Module.UserModules.Where(u => u.Role <= 1).Any()).ToListAsync();
+        //List<FeedbackTicket> viewableTickets = await _context.FeedbackTicket.Where(f => f.OwnerId == currentUser.Id || f.Module.StudentModule.Where(u => u.Role <= 1).Any()).ToListAsync();
 
-        return viewableTickets;
+        return null;// viewableTickets;
     }
 }
