@@ -1,4 +1,5 @@
 ﻿using FeedTrac.Server.Database;
+using FeedTrac.Server.Models.Responses.Modules;
 using FeedTrac.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -20,10 +21,11 @@ public class ModuleController : Controller
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ModuleService _moduleService;
 
-    public ModuleController(ApplicationDbContext context, UserService userService, ModuleService moduleService)
+    public ModuleController(ApplicationDbContext context, UserService userService, UserManager<ApplicationUser> userManager, ModuleService moduleService)
     {
         _context = context;
         _userService = userService;
+        _userManager = userManager;
         _moduleService = moduleService;
     }
 
@@ -36,14 +38,14 @@ public class ModuleController : Controller
     ///     <b>401:</b> The user is not signed in <br/>
     /// </returns>
     [HttpGet]
-    [ProducesResponseType(typeof(List<Module>), 200)]
+    [ProducesResponseType(typeof(UserModulesResponse), 200)]
     [ProducesResponseType(401)]
     public async Task<IActionResult> GetUserModules()
     {
         try
         {
             var modules = await _moduleService.GetUserModulesAsync();
-            return Ok(modules);
+            return Ok(new UserModulesResponse(modules));
         }
         catch (Exception e)
         {
@@ -53,10 +55,12 @@ public class ModuleController : Controller
 
     [HttpGet("all")]
     [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(UserModulesResponse), 200)]
+    [ProducesResponseType(401)]
     public async Task<IActionResult> GetAllModules()
     {
         var modules = await _context.Modules.ToListAsync();
-        return Ok(modules);
+        return Ok(new UserModulesResponse(modules));
     }
 
     /// <summary>
@@ -185,8 +189,8 @@ public class ModuleController : Controller
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
-    [HttpPost]
-    [Route("create")]
+    [HttpPost("/create")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateModule(string name)
     {
         if (_userService.GetCurrentUserId() == null)

@@ -1,4 +1,5 @@
 ﻿using FeedTrac.Server.Database;
+using FeedTrac.Server.Models.Responses.Modules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -55,11 +56,17 @@ public class ModuleService
 
     public async Task<Module> RenameModule(int moduleId, string newName)
     {
-        return new Module();
+        Module module = await _context.Modules.FindAsync(moduleId);
+        if (module == null)
+            throw new Exception("Module not found.");
+
+        module.Name = newName;
+        _context.Modules.Update(module);
+        await _context.SaveChangesAsync();
+
+        return module;
     }
 
-    [HttpPost("/create")]
-    [Authorize(Roles = "Admin")]
     public async Task<Module> CreateModuleAsync(string ModuleName)
     {
         Module newModule = new Module
