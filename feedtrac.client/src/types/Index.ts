@@ -3,7 +3,7 @@
 
 // student register request type
 export type studentRegister = {
-  UserName: string;
+  // UserName: string;
   Email: string;
   FirstName: string;
   LastName: string;

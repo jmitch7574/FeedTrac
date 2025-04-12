@@ -1,5 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_FEEDTRAC_ENV_KEY;
-import { AuthResponse, ForgotPasswordRequest, RefreshRequest, RefreshResponse, ResetPasswordRequest, studentLogin, studentRegister } from "@/types";
+import { AuthResponse, ForgotPasswordRequest, RefreshRequest, RefreshResponse, ResetPasswordRequest, studentLogin, studentRegister } from "@/types/Index";
 import axios from "axios";
 
 // auth for students
@@ -8,7 +8,7 @@ export const registerUser = async (data: studentRegister): Promise<AuthResponse>
     const response = await axios.post(`${API_BASE_URL}/student/register`, data);
     return response.data;
   } catch (error) {
-    if (error.response) {
+    if (axios.isAxiosError(error) && error.response) {
       console.error("Error response:", error.response.data);
     } else {
       console.error("Error:", error);
@@ -19,8 +19,17 @@ export const registerUser = async (data: studentRegister): Promise<AuthResponse>
 
 // login endpoint for students
 export const loginUser = async (data: studentLogin): Promise<AuthResponse> => {
-  const response = await axios.post(`${API_BASE_URL}/student/login`, data);
-  return response.data;
+  try {
+    const response = await axios.post(`${API_BASE_URL}/student/login`, data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error("Error response:", error.response.data);
+    } else {
+      console.error("Error:", error);
+    }
+    throw error;
+  }
 };
 
 // // logout endpoint for students

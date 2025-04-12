@@ -4,12 +4,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
+import { useState } from "react";
+import { studentLogin } from "@/types/Index";
+import { loginUser } from "@/api/Endpoints";
 
 export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const [Email, setEmail] = useState("test@test.com");
+  const [Password, setPassword] = useState("Test1234!");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     console.log("Sign in form submitted successfully");
+
+    const payload: studentLogin = {
+      Email,
+      Password,
+    };
+
+    try {
+      const res = await loginUser(payload);
+      console.log("Success:", res.token); // store token or redirect
+    } catch (err) {
+      console.error("Sign in failed:", err);
+    }
   };
 
   return (
@@ -24,7 +42,7 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
             <div className='flex flex-col gap-6'>
               <div className='grid gap-3'>
                 <Label htmlFor='email'>Email</Label>
-                <Input id='email' type='email' placeholder='JohnDoe@example.com' required />
+                <Input id='email' type='email' placeholder='JohnDoe@example.com' required value={Email} onChange={(e) => setEmail(e.target.value)} />
               </div>
               <div className='grid gap-3'>
                 <div className='flex items-center'>
@@ -33,7 +51,7 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
                     Forgot your password?
                   </a>
                 </div>
-                <Input id='password' type='password' placeholder='Enter your password' required />
+                <Input id='password' type='password' placeholder='Enter your password' required value={Password} onChange={(e) => setPassword(e.target.value)} />
               </div>
               <div className='flex flex-col gap-3'>
                 <Button type='submit' className='w-full'>

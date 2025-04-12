@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 import { registerUser } from "@/api/Endpoints"; // adjust import path
-import type { studentRegister } from "@/types"; // your type
+import type { studentRegister } from "@/types/Index"; // your type
 
 export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
   const [FirstName, setFirstName] = useState("test");
