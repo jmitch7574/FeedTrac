@@ -9,7 +9,7 @@ import { studentLogin } from "@/types/Index";
 import { loginUser } from "@/api/Endpoints";
 
 export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
-  const [Email, setEmail] = useState("test@test.com");
+  const [Email, setEmail] = useState("test@lincoln.ac.uk");
   const [Password, setPassword] = useState("Test1234!");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -20,6 +20,7 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
     const payload: studentLogin = {
       Email,
       Password,
+      rememberMe: true,
     };
 
     try {

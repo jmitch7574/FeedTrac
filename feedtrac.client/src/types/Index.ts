@@ -13,6 +13,7 @@ export type studentRegister = {
 export type studentLogin = {
   Email: string;
   Password: string;
+  rememberMe: boolean;
 };
 // auth response type
 export type AuthResponse = {
