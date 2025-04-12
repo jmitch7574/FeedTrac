@@ -7,10 +7,12 @@ import { Link } from "react-router";
 import { useState } from "react";
 import { studentLogin } from "@/types/Index";
 import { loginUser } from "@/api/Endpoints";
+import { useNavigate } from "react-router";
 
 export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
   const [Email, setEmail] = useState("test@lincoln.ac.uk");
   const [Password, setPassword] = useState("Test1234!");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,6 +28,7 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
     try {
       const res = await loginUser(payload);
       console.log("Success:", res.token); // store token or redirect
+      navigate("/"); // redirect to home page
     } catch (err) {
       console.error("Sign in failed:", err);
     }
