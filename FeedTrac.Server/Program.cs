@@ -1,4 +1,3 @@
-
 using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using FeedTrac.Server.Services;
@@ -20,7 +19,7 @@ namespace FeedTrac.Server
             builder.Services.AddSwaggerGen();
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString("database")));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("database")));
 
             // Establish Connection to SQL Server
             builder.Services.AddAuthorization();
@@ -34,6 +33,17 @@ namespace FeedTrac.Server
             builder.Services.AddScoped<ModuleService>();
             builder.Services.AddScoped<FeedbackService>();
             builder.Services.AddScoped<UserManager<ApplicationUser>, FeedTracUserManager>();
+
+            // Enable CORS
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    policy.WithOrigins("http://localhost:5173") // Replace with your frontend's URL
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
 
             var app = builder.Build();
 
@@ -50,6 +60,10 @@ namespace FeedTrac.Server
             }
 
             app.UseHttpsRedirection();
+
+            // Use CORS before any other middleware that might block the requests
+            app.UseCors("AllowFrontend");
+
             app.MapControllers();
 
             app.UseAuthorization();
