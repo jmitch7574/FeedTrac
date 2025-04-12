@@ -34,7 +34,10 @@ public class Module
     /// Reference to UserModules relationship
     /// </summary>
     [JsonIgnore]
-    public List<UserModule> UserModules { get; set; } = new();
+    public List<StudentModule> StudentModule { get; set; } = new();
+
+    [JsonIgnore]
+    public List<TeacherModule> TeacherModule { get; set; } = new();
 
     /// <summary>
     /// The list of tickets this module has
