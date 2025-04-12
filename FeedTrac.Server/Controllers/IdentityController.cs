@@ -136,7 +136,7 @@ namespace FeedTrac.Controllers
             var roles = await _userManager.GetRolesAsync(user);
             if (!roles.Contains("Student")) // Change condition as needed
             {
-                return Forbid("This endpoint is for student accounts only");
+                return Unauthorized("This endpoint is for student accounts only");
             }
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
