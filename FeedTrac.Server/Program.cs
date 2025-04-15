@@ -124,10 +124,22 @@ namespace FeedTrac.Server
                 options.Tokens.AuthenticatorTokenProvider = default; // Remove 2FA providers
             });
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("Localhost", policy =>
+                {
+                    policy.WithOrigins("http://localhost:5174")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+            });
+
             var app = builder.Build();
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
+            app.UseCors("Localhost")
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
