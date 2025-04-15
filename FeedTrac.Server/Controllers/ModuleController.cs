@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace FeedTrac.Server.Controllers;
 
@@ -207,6 +208,34 @@ public class ModuleController : Controller
         {
             return BadRequest(e.Message);
         }   
+    }
+
+    /// <summary>
+    /// Student endpoint to remove a module
+    /// </summary>
+    /// <param name="id"></param>
+    /// <response code="200">The user has left the module</response>
+    /// <response code="404">The module was not found or the user does not have permission</response>
+    [HttpDelete("{id}/leave")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [Authorize]
+    public async Task<IActionResult> LeaveModule(int id)
+    {
+        var module = await _context.Modules.FirstOrDefaultAsync(m => m.Id == id);
+
+        if (module == null)
+            return NotFound("Module not found");
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // This is the Identity User ID
+        if (module.StudentModule.FirstOrDefault(sm => sm.User == User.Identity) == null)
+        {
+            return NotFound("User not part of module");
+        }
+
+        module.StudentModule.Remove(module.StudentModule.FirstOrDefault(sm => sm.User == User.Identity));
+
+        return Ok();
     }
 
     /// <summary>

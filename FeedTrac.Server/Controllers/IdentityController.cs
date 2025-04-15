@@ -220,5 +220,27 @@ namespace FeedTrac.Controllers
             }
             return Ok();
         }
+
+        /// <summary>
+        /// Authentication Endpoint
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("me")]
+        public IActionResult IsAuthenticated()
+        {
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                return Ok(new
+                {
+                    isAuthenticated = true,
+                    username = User.Identity.Name
+                });
+            }
+
+            return Ok(new
+            {
+                isAuthenticated = false
+            });
+        }
     }
 }
