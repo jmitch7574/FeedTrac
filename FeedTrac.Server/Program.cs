@@ -139,7 +139,7 @@ namespace FeedTrac.Server
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
-            app.UseCors("Localhost")
+            app.UseCors("Localhost");
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
