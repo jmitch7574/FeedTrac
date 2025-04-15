@@ -124,6 +124,12 @@ namespace FeedTrac.Server
                 options.Tokens.AuthenticatorTokenProvider = default; // Remove 2FA providers
             });
 
+            builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.Cookie.SameSite = SameSiteMode.None; // Cross-origin cookie allowed
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // HTTPS required
+            });
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("Localhost", policy =>
