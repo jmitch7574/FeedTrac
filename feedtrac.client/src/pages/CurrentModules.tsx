@@ -12,7 +12,7 @@ function CurrentModules() {
                 <button style={{ margin: '0 10px' }}>Creating Modules</button>
             </a>
             <a href="/Current_modules">
-                <button style={{ margin: '0 10px' }}>Current Modules</button>
+                <button>Current Modules</button>
             </a>
             <a href="/Tickets">
                 <button style={{ margin: '0 10px' }}>Tickets</button>
