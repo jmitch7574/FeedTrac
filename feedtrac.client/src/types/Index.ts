@@ -15,6 +15,24 @@ export type studentLogin = {
   Password: string;
   rememberMe: boolean;
 };
+
+// teacher related endpoints
+export type teacherRegister = {
+  // UserName: string;
+  Email: string;
+  FirstName: string;
+  LastName: string;
+  Password: string;
+};
+// student login request type
+export type teacherLogin = {
+  Email: string;
+  Password: string;
+  twoFactorCode: string;
+  rememberMe: boolean;
+};
+
+// auth response type
 // auth response type
 export type AuthResponse = {
   token: string;
