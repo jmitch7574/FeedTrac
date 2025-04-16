@@ -8,6 +8,13 @@ namespace FeedTrac.Server.Database
     /// </summary>
     public class FeedbackTicket
     {
+        public enum TicketStatus
+        {
+            Open,
+            InProgress,
+            Closed,
+        }
+
         /// <summary>
         /// The unique id of the ticket
         /// </summary>
@@ -47,5 +54,24 @@ namespace FeedTrac.Server.Database
         [Column(TypeName = "varchar(255)")]
         public string Title { get; set; }
 
+        /// <summary>
+        /// The current status of the ticket
+        /// </summary>
+        public TicketStatus status { get; set; }
+
+        /// <summary>
+        /// The timestamp the ticket was created
+        /// </summary>
+        public DateTime CreatedOn { get; set; }
+
+        /// <summary>
+        /// The last time the ticket was updated
+        /// </summary>
+        public DateTime LastUpdated { get; set; }
+
+        /// <summary>
+        /// Messages within this ticket
+        /// </summary>
+        public List<FeedbackMessage> Messages { get; set; } = new();
     }
 }
