@@ -1,4 +1,4 @@
-﻿// IdentityController.cs
+// IdentityController.cs
 // This file is a modified / rewritten version of the original IdentityApiEndpointRouteBuilderExtensions
 // https://github.com/dotnet/aspnetcore/blob/main/src/Identity/Core/src/IdentityApiEndpointRouteBuilderExtensions.cs
 // Last Modified By: Jake Mitchell
@@ -256,6 +256,7 @@ namespace FeedTrac.Controllers
             }
 
             return Ok(new AuthSummary() { status = AuthSummary.AuthStatus.NotAuthenticated});
+
         }
     }
 }
