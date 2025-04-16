@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/apiClient";
-import { AuthResponse, studentLogin, studentRegister, teacherLogin, teacherRegister } from "@/types/Index";
+import { AuthResponse, ForgotPasswordRequest, ResetPasswordRequest, studentLogin, studentRegister, teacherLogin, teacherRegister } from "@/types/Index";
 import axios from "axios";
 
 // auth for students
@@ -54,6 +54,37 @@ export const loginTeacher = async (data: teacherLogin): Promise<AuthResponse> =>
   try {
     const response = await apiClient.post("/identity/teacher/login", data);
     return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error("Error response:", error.response.data);
+    } else {
+      console.error("Error:", error);
+    }
+    throw error;
+  }
+};
+
+// reset password request
+export const resetPasswordRequest = async (data: ResetPasswordRequest): Promise<void> => {
+  // -- auth for reset password
+  try {
+    await apiClient.post("/identity/resetPassword", data);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error("Error response:", error.response.data);
+    } else {
+      console.error("Error:", error);
+    }
+    throw error;
+  }
+};
+
+// forgot password request - implemented here but not in the backend ❌
+// TODO: Implement this in the backend
+export const forgotPasswordRequest = async (data: ForgotPasswordRequest): Promise<void> => {
+  // -- forgot password request for any user
+  try {
+    await apiClient.post("/identity/forgotPassword", data);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       console.error("Error response:", error.response.data);

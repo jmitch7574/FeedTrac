@@ -33,7 +33,6 @@ export type teacherLogin = {
 };
 
 // auth response type
-// auth response type
 export type AuthResponse = {
   token: string;
   refreshToken: string;
@@ -42,6 +41,29 @@ export type AuthResponse = {
     firstName: string;
     lastName: string;
   };
+};
+
+// modules related types
+export type Module = {
+  id: number;
+  name: moduleName;
+  joinCode: string;
+};
+
+export type teacherModuleId = {
+  teacherId: string;
+};
+
+export type teacherModuleEmail = {
+  teacherId: string;
+};
+
+export type moduleName = {
+  moduleName: string;
+};
+
+export type ModuleResponse = {
+  modules: Module[];
 };
 
 // password related endpoints
