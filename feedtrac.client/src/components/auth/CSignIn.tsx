@@ -4,13 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { studentLogin } from "@/types/Index";
 import { loginUser } from "@/api/Endpoints";
 import { useNavigate } from "react-router";
 
 export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
-  const [Email, setEmail] = useState("test@lincoln.ac.uk");
+  const [Email, setEmail] = useState("umarnauman@lincoln.ac.uk");
   const [Password, setPassword] = useState("Test1234!");
   const navigate = useNavigate();
 

@@ -116,7 +116,18 @@ namespace FeedTrac.Server
 
             // Establish Connection to SQL Server
             builder.Services.AddAuthorization();
-            builder.Services.AddAuthentication().AddCookie(IdentityConstants.ApplicationScheme);
+            // builder.Services.AddAuthentication().AddCookie(IdentityConstants.ApplicationScheme);
+
+            builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
+    .AddCookie(IdentityConstants.ApplicationScheme, options =>
+    {
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    });
+
+
+
 
             builder.Services.AddIdentityCore<ApplicationUser>()
                 .AddRoles<IdentityRole>()
@@ -152,7 +163,7 @@ namespace FeedTrac.Server
 
             app.UseHttpsRedirection();
             app.MapControllers();
-
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapFallbackToFile("/index.html");
