@@ -66,6 +66,17 @@ export type ModuleResponse = {
   modules: Module[];
 };
 
+// user related types
+export type PublicUser = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  userName: string;
+  email: string;
+  emailConfirmed: boolean;
+  twoFactorEnabled: boolean;
+};
+
 // password related endpoints
 // forgot password request type
 export type ForgotPasswordRequest = {
