@@ -4,9 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { studentLogin } from "@/types/Index";
-import { loginUser } from "@/api/Endpoints";
+import { loginStudent } from "@/hooks/useAuth";
 import { useNavigate } from "react-router";
 
 export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
@@ -26,7 +26,7 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
     };
 
     try {
-      const res = await loginUser(payload);
+      const res = await loginStudent(payload);
       console.log("Success:", res.token); // store token or redirect
       navigate("/"); // redirect to home page
     } catch (err) {

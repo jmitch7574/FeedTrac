@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
-import { registerUser } from "@/api/Endpoints"; // adjust import path
-import type { studentRegister } from "@/types/Index"; // your type
+import type { studentRegister as studentRegisterType } from "@/types/Index";
+import { registerStudent } from "@/hooks/useAuth";
 
 export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
   const [FirstName, setFirstName] = useState("test");
@@ -17,7 +17,7 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const payload: studentRegister = {
+    const payload: studentRegisterType = {
       FirstName,
       LastName,
       Email,
@@ -25,7 +25,7 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
     };
 
     try {
-      const res = await registerUser(payload);
+      const res = await registerStudent(payload);
       console.log("Success:", res.token); // store token or redirect
     } catch (err) {
       console.error("Registration failed:", err);
