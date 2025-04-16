@@ -1,4 +1,4 @@
-﻿// IdentityController.cs
+// IdentityController.cs
 // This file is a modified / rewritten version of the original IdentityApiEndpointRouteBuilderExtensions
 // https://github.com/dotnet/aspnetcore/blob/main/src/Identity/Core/src/IdentityApiEndpointRouteBuilderExtensions.cs
 // Last Modified By: Jake Mitchell
@@ -222,25 +222,41 @@ namespace FeedTrac.Controllers
         }
 
         /// <summary>
+        /// Logout endpoint
+        /// </summary>
+        [HttpPost("logout")]
+        [ProducesResponseType(200)]
+        public async Task<IActionResult> Logout()
+        {
+            await _signInManager.SignOutAsync();
+            return Ok("Logged out successfully");
+        }
+
+        /// <summary>
         /// Authentication Endpoint
         /// </summary>
         /// <returns></returns>
-        [HttpGet("me")]
-        public IActionResult IsAuthenticated()
+        [HttpGet]
+        [ProducesResponseType(typeof(AuthSummary), 200)]
+        public async Task<IActionResult> IsAuthenticated()
         {
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {
-                return Ok(new
+                AuthSummary.AuthStatus status = AuthSummary.AuthStatus.AuthenticatedStudent;
+                if (User.IsInRole("Teacher"))
                 {
-                    isAuthenticated = true,
-                    username = User.Identity.Name
-                });
+                    status = AuthSummary.AuthStatus.AuthenticatedTeacher;
+                }
+                else if (User.IsInRole("Admin"))
+                {
+                    status = AuthSummary.AuthStatus.AuthenticatedAdmin;
+                }
+
+                return Ok(new AuthSummary() { status = status, userInfo = new(await _userManager.GetUserAsync(User)) });
             }
 
-            return Ok(new
-            {
-                isAuthenticated = false
-            });
+            return Ok(new AuthSummary() { status = AuthSummary.AuthStatus.NotAuthenticated});
+
         }
     }
 }
