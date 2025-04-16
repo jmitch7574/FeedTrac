@@ -146,9 +146,14 @@ public class ModuleController : Controller
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == teacherEmail);
         if (user == null)
             return NotFound("Teacher not found");
+
         List<string> userRoles = (await _userManager.GetRolesAsync(user)).ToList();
         if ((userRoles.Contains("Teacher") || userRoles.Contains("Admin")) == false)
             return BadRequest("User is not a teacher");
+
+        if (module.TeacherModule.Find(sm => sm.UserId == user.Id && sm.Module == module) != null)
+            throw new Exception("Teacher is already assigned to the module");
+
 
         module.TeacherModule.Add(new TeacherModule
         {

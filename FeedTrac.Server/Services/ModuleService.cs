@@ -45,6 +45,9 @@ public class ModuleService
         if (module == null)
             throw new Exception("Module not found.");
 
+        if (module.StudentModule.Find(sm => sm.UserId == userId && sm.Module == module) != null)
+            throw new Exception("User is already a part of the module");
+
         module.StudentModule.Add(new StudentModule
         {
             UserId = userId,
