@@ -45,5 +45,15 @@ public class Module
     [JsonIgnore]
     public List<FeedbackTicket> Tickets { get; set; } = new();
 
+    /// <summary>
+    /// Checks if a user is part of this module
+    /// </summary>
+    /// <param name="userId">id of the user</param>
+    /// <returns>True if the user is a part, false otherwise</returns>
+    public bool IsUserPartOfModule(string userId)
+    {
+        return StudentModule.Any(x => x.UserId == userId) || TeacherModule.Any(x => x.UserId == userId);
+    }
+
 
 }
