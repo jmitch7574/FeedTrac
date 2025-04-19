@@ -19,7 +19,13 @@ namespace FeedTrac.Server.Database
         /// </summary>
         public DbSet<StudentModule> StudentModules { get; set; }
 
-        public DbSet<StudentModule> TeacherModules { get; set; }
+        public DbSet<TeacherModule> TeacherModules { get; set; }
+
+        public DbSet<FeedbackTicket> Tickets { get; set; }
+
+        public DbSet<FeedbackMessage> Messages { get; set; }
+
+        public DbSet<MessageImage> Images { get; set; }
 
         /// <summary>
         /// The feedback tickets table
@@ -98,7 +104,7 @@ namespace FeedTrac.Server.Database
                 .HasForeignKey(FeedbackMessage => FeedbackMessage.TicketId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Entity<MessageImages>()
+            builder.Entity<MessageImage>()
                 .HasOne(MessageImages => MessageImages.Message)
                 .WithMany(FeedbackMessage => FeedbackMessage.Images)
                 .HasForeignKey(MessageImages => MessageImages.MessageId)

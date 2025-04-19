@@ -115,6 +115,7 @@ namespace FeedTrac.Server
             builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<ModuleService>();
             builder.Services.AddScoped<FeedbackService>();
+            builder.Services.AddScoped<ImageService>();
             builder.Services.AddScoped<UserManager<ApplicationUser>, FeedTracUserManager>();
 
             builder.Services.Configure<IdentityOptions>(options =>

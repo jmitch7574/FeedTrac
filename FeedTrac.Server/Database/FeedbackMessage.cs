@@ -25,7 +25,7 @@ namespace FeedTrac.Server.Database
         /// <summary>
         /// Referenced Images for the message
         /// </summary>
-        public List<MessageImages> Images { get; set; }
+        public List<MessageImage> Images { get; set; }
 
         /// <summary>
         /// The ID of the ticket this message belongs to

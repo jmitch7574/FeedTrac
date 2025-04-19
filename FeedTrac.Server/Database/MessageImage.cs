@@ -1,11 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FeedTrac.Server.Database
 {
     /// <summary>
     /// An image object that can be attached to a message
     /// </summary>
-    public class MessageImages
+    public class MessageImage
     {
         /// <summary>
         /// Id of the image
@@ -17,11 +18,15 @@ namespace FeedTrac.Server.Database
         /// <summary>
         /// Id of the attached message
         /// </summary>
+
+        [Column(TypeName = "integer")]
         public int MessageId { get; set; }
 
         /// <summary>
         /// Message object
         /// </summary>
+
+        [ForeignKey(nameof(MessageId))]
         public FeedbackMessage Message { get; set; } = null!;
 
         /// <summary>
