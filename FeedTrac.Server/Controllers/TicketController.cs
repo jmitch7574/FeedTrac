@@ -2,12 +2,9 @@
 using FeedTrac.Server.Models.Forms.Ticket;
 using FeedTrac.Server.Models.Responses.Ticket;
 using FeedTrac.Server.Services;
-using Humanizer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Sockets;
 
 namespace FeedTrac.Server.Controllers;
 
@@ -21,15 +18,20 @@ public class TicketController : Controller
 
     private readonly ApplicationDbContext _context;
     private readonly UserService _userService;
-    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ModuleService _moduleService;
     private readonly ImageService _imageService;
 
-    public TicketController(ApplicationDbContext context, UserService userService, UserManager<ApplicationUser> userManager, ModuleService moduleService, ImageService imageService)
+    /// <summary>
+    /// Constructor for Ticket Controller
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="userService"></param>
+    /// <param name="moduleService"></param>
+    /// <param name="imageService"></param>
+    public TicketController(ApplicationDbContext context, UserService userService, ModuleService moduleService, ImageService imageService)
     {
         _context = context;
         _userService = userService;
-        _userManager = userManager;
         _moduleService = moduleService;
         _imageService = imageService;
     }
@@ -39,10 +41,12 @@ public class TicketController : Controller
     /// </summary>
     /// <returns></returns>
     [HttpGet]
-    [Authorize]
     public async Task<IActionResult> GetMyTickets()
     {
-        ApplicationUser user = await _userService.GetCurrentUserAsync();
+        ApplicationUser? user = await _userService.GetCurrentUserAsync();
+        
+        if (user is null)
+            return NotFound("User is not logged in.");
 
         if (User.IsInRole("Student"))
         {
@@ -65,18 +69,33 @@ public class TicketController : Controller
         return BadRequest("User is not a student or teacher");
     }
 
+    /// <summary>
+    /// Get Specific Ticket Information
+    /// </summary>
+    /// <param name="id">ID of the ticket</param>
     [HttpGet("{id}")]
     [Authorize]
+    [ProducesResponseType(typeof(TicketResponseDto), 200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(403)]
     public async Task<IActionResult> GetTicket(int id)
     {
-        var ticket = await _context.Tickets.FindAsync(id);
+        var user = await _userService.GetCurrentUserAsync();
+        if (user is null)
+            return Unauthorized("User is not logged in");
+        
+        var ticket = await _context.Tickets
+            .Include(ticket => ticket.Owner)
+            .Include(ticket => ticket.Module)
+                .ThenInclude(module => module.TeacherModule)
+            .FirstOrDefaultAsync(t => t.TicketId == id);
+
         if (ticket == null)
         {
             return NotFound();
         }
-        var user = await _userService.GetCurrentUserAsync();
 
-        if (ticket.Owner != await _userService.GetCurrentUserAsync() && ticket.Module.TeacherModule.Find(tm => tm.User.Id == user.Id) == null)
+        if (!ticket.DoesUserHaveAccess(user.Id))
         {
             return Forbid("User does not have access to the ticket");
         }
@@ -85,11 +104,16 @@ public class TicketController : Controller
     }
 
     [HttpPost("{moduleId}/create")]
-    [Authorize]
     public async Task<IActionResult> CreateTicket([FromForm] TicketCreateDto request, int moduleId)
     {
-        var targetModule = await _context.Modules.Include(m => m.StudentModule)
-        .ThenInclude(sm => sm.User).FirstOrDefaultAsync(m => m.Id == moduleId);
+        var user = await _userService.GetCurrentUserAsync();
+        if (user is null)
+            return Unauthorized("User is not logged in");
+        
+        var targetModule = await _context.Modules
+            .Include(m => m.StudentModule)
+                .ThenInclude(sm => sm.User)
+            .FirstOrDefaultAsync(m => m.Id == moduleId);
 
         if (targetModule == null)
         {
@@ -101,8 +125,7 @@ public class TicketController : Controller
         {
             return BadRequest("User is not a part of the module");
         }
-
-        var user = await _userService.GetCurrentUserAsync();
+        
         var ticket = new FeedbackTicket
         {
             Module = targetModule,
@@ -128,12 +151,9 @@ public class TicketController : Controller
             };
             _context.Messages.Add(message);
 
-            if (request.FirstMessage.Images != null)
+            foreach (var image in request.FirstMessage.Images)
             {
-                foreach (var image in request.FirstMessage.Images)
-                {
-                    await _imageService.UploadImage(image, message.MessageId);
-                }
+                await _imageService.UploadImage(image, message.MessageId);
             }
         }
 
@@ -147,18 +167,21 @@ public class TicketController : Controller
     [Authorize]
     public async Task<IActionResult> AddMessageToTicket([FromForm] MessageCreateDto request, int ticketId)
     {
+        var user = await _userService.GetCurrentUserAsync();
+        if (user is null)
+            return Unauthorized("User is not logged in");
+        
         var ticket = await _context.Tickets
             .Include(t => t.Owner)
             .Include(t => t.Module)
                 .ThenInclude(m => m.TeacherModule)
+                .ThenInclude(m => m.User)
             .FirstOrDefaultAsync(t => t.TicketId == ticketId);
 
         if (ticket == null)
         {
             return NotFound("Ticket not found");
         }
-
-        var user = await _userService.GetCurrentUserAsync();
 
         if (ticket.Owner != await _userService.GetCurrentUserAsync() && ticket.Module.TeacherModule.Find(tm => tm.User.Id == user.Id) == null)
         {
@@ -190,12 +213,9 @@ public class TicketController : Controller
         _context.Messages.Add(message);
         await _context.SaveChangesAsync();
 
-        if (request.Images != null)
+        foreach (var image in request.Images)
         {
-            foreach (var image in request.Images)
-            {
-                await _imageService.UploadImage(image, message.MessageId);
-            }
+            await _imageService.UploadImage(image, message.MessageId);
         }
 
         await _context.SaveChangesAsync();
@@ -209,8 +229,11 @@ public class TicketController : Controller
             .Include(t => t.Owner)
             .Include(t => t.Module)
                 .ThenInclude(m => m.TeacherModule)
+                .ThenInclude(m => m.User)
             .FirstOrDefaultAsync(t => t.TicketId == ticketId);
 
+        if (ticket is null)
+            return NotFound("Ticket could not be found");
 
         var user = await _userService.GetCurrentUserAsync();
 

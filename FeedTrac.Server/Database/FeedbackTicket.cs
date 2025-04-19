@@ -73,5 +73,15 @@ namespace FeedTrac.Server.Database
         /// Messages within this ticket
         /// </summary>
         public List<FeedbackMessage> Messages { get; set; } = new();
+
+        /// <summary>
+        /// Check if a user should have access to this ticket
+        /// </summary>
+        /// <param name="userId">The ID of the user to check</param>
+        /// <returns>True if the user has access. False otherwise</returns>
+        public bool DoesUserHaveAccess(string userId)
+        {
+            return OwnerId == userId || Module.TeacherModule.Any(x => x.UserId == userId);
+        }
     }
 }
