@@ -135,12 +135,12 @@ namespace FeedTrac.Server.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
-
-                    b.Property<int>("status")
-                        .HasColumnType("integer");
 
                     b.HasKey("TicketId");
 
@@ -151,7 +151,7 @@ namespace FeedTrac.Server.Migrations
                     b.ToTable("FeedbackTicket", "feedtrac");
                 });
 
-            modelBuilder.Entity("FeedTrac.Server.Database.MessageImages", b =>
+            modelBuilder.Entity("FeedTrac.Server.Database.MessageImage", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -420,7 +420,7 @@ namespace FeedTrac.Server.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("FeedTrac.Server.Database.MessageImages", b =>
+            modelBuilder.Entity("FeedTrac.Server.Database.MessageImage", b =>
                 {
                     b.HasOne("FeedTrac.Server.Database.FeedbackMessage", "Message")
                         .WithMany("Images")

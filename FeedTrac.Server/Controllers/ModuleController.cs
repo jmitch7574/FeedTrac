@@ -1,11 +1,11 @@
 ﻿using FeedTrac.Server.Database;
+using FeedTrac.Server.Extensions;
 using FeedTrac.Server.Models.Responses.Modules;
 using FeedTrac.Server.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace FeedTrac.Server.Controllers;
 
@@ -18,14 +18,18 @@ public class ModuleController : Controller
 {
 
     private readonly ApplicationDbContext _context;
-    private readonly UserService _userService;
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly FeedTracUserManager _userManager;
     private readonly ModuleService _moduleService;
 
-    public ModuleController(ApplicationDbContext context, UserService userService, UserManager<ApplicationUser> userManager, ModuleService moduleService)
+    /// <summary>
+    /// Constructor for Module Controller
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="userManager"></param>
+    /// <param name="moduleService"></param>
+    public ModuleController(ApplicationDbContext context, FeedTracUserManager userManager, ModuleService moduleService)
     {
         _context = context;
-        _userService = userService;
         _userManager = userManager;
         _moduleService = moduleService;
     }
@@ -35,21 +39,14 @@ public class ModuleController : Controller
     /// </summary>
     /// <example> GET /modules </example>
     /// <response code="200">Returns user's modules</response>
-    /// <response code="404">The user is not signed in</response>
+    /// <response code="401">The user is not signed in</response>
     [HttpGet]
-    [ProducesResponseType(typeof(UserModulesResponse), 200)]
-    [ProducesResponseType(401)]
+    [ProducesResponseType(typeof(ModuleCollectionDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetUserModules()
     {
-        try
-        {
-            var modules = await _moduleService.GetUserModulesAsync();
-            return Ok(new UserModulesResponse(modules));
-        }
-        catch (Exception e)
-        {
-            return Unauthorized(e.Message);
-        }
+        List<Module> modules = await _moduleService.GetUserModulesAsync();
+        return Ok(new ModuleCollectionDto(modules));
     }
 
     /// <summary>
@@ -57,15 +54,14 @@ public class ModuleController : Controller
     /// </summary>
     /// <example> GET /modules </example>
     /// <response code="200">Returns user's modules</response>
-    /// <response code="404">The user does not have permissions</response>
+    /// <response code="401">The user does not have permissions</response>
     [HttpGet("all")]
-    [Authorize(Roles = "Admin")]
-    [ProducesResponseType(typeof(UserModulesResponse), 200)]
-    [ProducesResponseType(404)]
+    [ProducesResponseType(typeof(ModuleCollectionDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAllModules()
     {
-        var modules = await _context.Modules.ToListAsync();
-        return Ok(new UserModulesResponse(modules));
+        var modules = await _moduleService.GetAllModulesAsync();
+        return Ok(new ModuleCollectionDto(modules));
     }
 
     /// <summary>
@@ -75,25 +71,37 @@ public class ModuleController : Controller
     /// <example> POST modules/join?joinCode=xxxxxx </example>
     /// <response code="200">The user has been added</response>
     /// <response code="400">Failed to join the module</response>
-    /// <response code="404">The user is not signed in</response>
+    /// <response code="401">The user is not signed in</response>
     [HttpPost("join")]
-    [Authorize(Roles = "Student")]
-    [ProducesResponseType(typeof(ModuleResponse), 200)]
-    [ProducesResponseType(404)]
+    [ProducesResponseType(typeof(ModuleDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> JoinModule(string joinCode)
     {
-        if (_userService.GetCurrentUserId() == null)
-            return Unauthorized("You must be signed in to join a module");
+        var user = await _userManager.RequireUser("Student");
 
-        try
+        var userId = user.Id;
+        var module = await _context.Modules
+            .Include(m => m.StudentModule)
+            .Where(m => m.JoinCode == joinCode)
+            .FirstOrDefaultAsync();
+
+        if (module == null)
+            throw new ResourceNotFoundException();
+
+        if (module.StudentModule.Find(sm => sm.UserId == userId && sm.Module == module) != null)
+            return BadRequest(new { error = "User is already a part of this module" });
+
+        module.StudentModule.Add(new StudentModule
         {
-            var module = await _moduleService.JoinModule(joinCode);
-            return Ok(new ModuleResponse(module));
-        }
-        catch(Exception e)
-        {
-            return BadRequest(e.Message);
-        }
+            UserId = userId,
+            User = user,
+            ModuleId = module.Id,
+            Module = module
+        });
+        
+        await _context.SaveChangesAsync();
+        return Ok(new ModuleDto(module));
     }
 
     /// <summary>
@@ -103,24 +111,42 @@ public class ModuleController : Controller
     /// <param name="teacherId"></param>
     /// <response code="200">The teacher has been assigned</response>
     /// <response code="404">The module or teacher was not found</response>
+    /// <response code="401">The user is not authorized</response>
+    /// <response code="400">The teacher could not be assigned</response>
     [HttpPost("/{moduleId}/assignTeacher/byTeacherId")]
-    [Authorize(Roles = "Admin")]
-    [ProducesResponseType(typeof(string), 200)]
-    [ProducesResponseType(404)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AssignTeacherById(string moduleId, string teacherId)
     {
-        var module = await _context.Modules.FirstOrDefaultAsync(m => m.Id == int.Parse(moduleId));
-        if (module == null)
-            return NotFound("Module not found");
+        var user =  await _userManager.RequireUser("Admin");
+        
+        var module = await _context.Modules
+            .Include(m => m.TeacherModule)
+            .FirstOrDefaultAsync(m => m.Id == int.Parse(moduleId));
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == teacherId);
-        if (user == null)
-            return NotFound("User not found");
+        if (module == null)
+            throw new ResourceNotFoundException();
+        
+        var teacher = _context.Users.FirstOrDefault(u => u.Id == teacherId);
+        
+        if (teacher == null)
+            throw new ResourceNotFoundException();
+        
+        if (!(await _userManager.IsInRoleAsync(teacher, "Teacher")))
+            return BadRequest(new { error = "Given user is not a teacher" });
+
+        if (module.TeacherModule.Find(sm => sm.UserId == user.Id && sm.Module == module) != null)
+            return BadRequest(new { error = "Teacher is already assigned to the module" });
+
 
         module.TeacherModule.Add(new TeacherModule
         {
             UserId = user.Id,
-            ModuleId = module.Id
+            User = user,
+            ModuleId = module.Id,
+            Module = module
         });
 
         await _context.SaveChangesAsync();
@@ -132,33 +158,44 @@ public class ModuleController : Controller
     /// </summary>
     /// <param name="moduleId"></param>
     /// <param name="teacherEmail"></param>
-    /// <returns></returns>
+    /// <response code="200">The teacher has been assigned</response>
+    /// <response code="404">The module or teacher was not found</response>
+    /// <response code="401">The user is not authorized</response>
+    /// <response code="400">The teacher could not be assigned</response>
     [HttpPost("/{moduleId}/assignTeacher/byTeacherEmail")]
-    [Authorize(Roles = "Admin")]
-    [ProducesResponseType(typeof(string), 200)]
-    [ProducesResponseType(404)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AssignTeacherByEmail(string moduleId, string teacherEmail)
     {
-        var module = await _context.Modules.FirstOrDefaultAsync(m => m.Id == int.Parse(moduleId));
+        var user =  await _userManager.RequireUser("Admin");
+        
+        var module = await _context.Modules
+            .Include(m => m.TeacherModule)
+            .FirstOrDefaultAsync(m => m.Id == int.Parse(moduleId));
+
         if (module == null)
-            return NotFound("Module not found");
-
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == teacherEmail);
-        if (user == null)
-            return NotFound("Teacher not found");
-
-        List<string> userRoles = (await _userManager.GetRolesAsync(user)).ToList();
-        if ((userRoles.Contains("Teacher") || userRoles.Contains("Admin")) == false)
-            return BadRequest("User is not a teacher");
+            throw new ResourceNotFoundException();
+        
+        var teacher = _context.Users.FirstOrDefault(u => u.Email == teacherEmail);
+        
+        if (teacher == null)
+            throw new ResourceNotFoundException();
+        
+        if (!(await _userManager.IsInRoleAsync(teacher, "Teacher")))
+            return BadRequest(new { error = "Given user is not a teacher" });
 
         if (module.TeacherModule.Find(sm => sm.UserId == user.Id && sm.Module == module) != null)
-            throw new Exception("Teacher is already assigned to the module");
+            return BadRequest(new { error = "Teacher is already assigned to the module" });
 
 
         module.TeacherModule.Add(new TeacherModule
         {
             UserId = user.Id,
-            ModuleId = module.Id
+            User = user,
+            ModuleId = module.Id,
+            Module = module
         });
 
         await _context.SaveChangesAsync();
@@ -172,20 +209,27 @@ public class ModuleController : Controller
     /// <param name="id">The id of the module</param>
     /// <response code="200">Returns the module</response>
     /// <response code="404">The module was not found</response>
+    /// <response code="400">The user is not authorized to access the requested module</response>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(ModuleResponse), 200)]
-    [ProducesResponseType(404)]
+    [ProducesResponseType(typeof(ModuleDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetModule(int id)
     {
-        try
-        {
-            var module = await _moduleService.GetModuleAsync(id);
-            return Ok(new ModuleResponse(module));
-        }
-        catch
-        {
-            return NotFound("Module not found");
-        }
+        var user =  await _userManager.RequireUser();
+        
+        var module = await _context.Modules.Where(m => m.Id == id)
+            .Include(m => m.StudentModule)
+            .ThenInclude(sm => sm.User)
+            .FirstOrDefaultAsync();
+
+        if (module == null)
+            throw new ResourceNotFoundException();
+
+        if (! await _userManager.IsInRoleAsync(user, "Admin") && module.StudentModule.FirstOrDefault(sm => sm.UserId == user.Id) == null )
+            throw new UnauthorizedAccessException();
+        
+        return Ok(new ModuleDto(module));
     }
 
     /// <summary>
@@ -195,24 +239,23 @@ public class ModuleController : Controller
     /// <response code="200">The module was deleted</response>
     /// <response code="404">The module was not found or the user does not have permission</response>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(404)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> DeleteModule(int id)
     {
-        var module = await _context.Modules.FirstOrDefaultAsync(m => m.Id == id);
-        if (module == null)
-            return NotFound("Module not found");
+        await _userManager.RequireUser("Admin");
+        
+        Module? targetModule = await _context.Modules
+            .FirstOrDefaultAsync(m => m.Id == id);
 
-        try
-        {
-            await _moduleService.DeleteModuleAsync(id);
-            return Ok("Module deleted");
-        }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }   
+        if (targetModule == null)
+            throw new ResourceNotFoundException();
+
+        _context.Modules.Remove(targetModule);
+        await _context.SaveChangesAsync();
+
+        return Ok();
     }
 
     /// <summary>
@@ -220,26 +263,32 @@ public class ModuleController : Controller
     /// </summary>
     /// <param name="id"></param>
     /// <response code="200">The user has left the module</response>
-    /// <response code="404">The module was not found or the user does not have permission</response>
+    /// <response code="404">The module was not found</response>
+    /// <response code="401">The user is not part of the module</response>
     [HttpDelete("{id}/leave")]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(404)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [Authorize]
     public async Task<IActionResult> LeaveModule(int id)
     {
-        var module = await _context.Modules.FirstOrDefaultAsync(m => m.Id == id);
+        var user = await _userManager.RequireUser("Student");
+        
+        var module = await _context.Modules
+            .Include(m =>  m.StudentModule)
+            .ThenInclude(sm => sm.User)
+            .FirstOrDefaultAsync(m => m.Id == id);
 
         if (module == null)
-            return NotFound("Module not found");
+            throw new ResourceNotFoundException();
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // This is the Identity User ID
-        if (module.StudentModule.FirstOrDefault(sm => sm.User == User.Identity) == null)
-        {
-            return NotFound("User not part of module");
-        }
+        StudentModule? sm = module.StudentModule.FirstOrDefault(sm => sm.User == user);
 
-        module.StudentModule.Remove(module.StudentModule.FirstOrDefault(sm => sm.User == User.Identity));
-
+        if (sm == null)
+            throw new UnauthorizedResourceAccessException();
+        
+        module.StudentModule.Remove(sm);
+        await _context.SaveChangesAsync();
         return Ok();
     }
 
@@ -248,17 +297,22 @@ public class ModuleController : Controller
     /// </summary>
     /// <param name="name"></param>
     /// <response code="200">The module was created</response>
-    /// <response code="404">The user does not have permission</response>
+    /// <response code="401">The user is not authorized to create a module</response>
     [HttpPost("/create")]
-    [Authorize(Roles = "Admin")]
-    [ProducesResponseType(typeof(ModuleResponse), 200)]
-    [ProducesResponseType(404)]
+    [ProducesResponseType(typeof(ModuleDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateModule(string name)
     {
-        if (_userService.GetCurrentUserId() == null)
-            return Unauthorized("You must be signed in to create a module");
+        await _userManager.RequireUser("Admin");
+        
+        Module newModule = new Module
+        {
+            Name = name,
+            JoinCode = Guid.NewGuid().ToString().Substring(0, 6)
+        };
 
-        var module = await _moduleService.CreateModuleAsync(name);
-        return Ok(module);
+        _context.Modules.Add(newModule);
+        await _context.SaveChangesAsync();
+        return Ok(new ModuleDto(newModule));
     }
 }
