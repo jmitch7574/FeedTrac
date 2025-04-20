@@ -147,6 +147,7 @@ namespace FeedTrac.Server
             app.UseDefaultFiles();
             app.UseStaticFiles();
             app.UseCors("Localhost");
+            app.UseMiddleware<FeedTracMiddleware>(); // Register your custom middleware
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
