@@ -26,9 +26,16 @@ public class FeedTracMiddleware
 		{
 			await _next(context); // Continue down the pipeline
 		}
-		catch (Exception ex) // Safely catch any errors and parse them into json responses
+		catch (FeedTracHTTPException ex)
 		{
-			context.Response.StatusCode = 401; // Unauthorized
+			context.Response.StatusCode = ex.HttpStatusCode;
+			context.Response.ContentType = "application/json";
+			var response = new { error = ex.Message };
+			await context.Response.WriteAsJsonAsync(response);
+		}
+		catch (Exception ex)
+		{
+			context.Response.StatusCode = 500;
 			context.Response.ContentType = "application/json";
 			var response = new { error = ex.Message };
 			await context.Response.WriteAsJsonAsync(response);
@@ -37,34 +44,66 @@ public class FeedTracMiddleware
 }
 
 /// <summary>
+/// Represents that can occur in the FeedTrac API
+/// </summary>
+public class FeedTracHTTPException : Exception
+{
+	/// <summary>
+	/// The HTTP code of the error
+	/// </summary>
+	public int HttpStatusCode { get; set; }
+
+	/// <summary>
+	/// Initializes a FeedTrac HTTP Exception
+	/// </summary>
+	/// <param name="message">The error message</param>
+	/// <param name="httpStatusCode">HTTP status code associated with the error</param>
+	public FeedTracHTTPException(string message, int httpStatusCode) : base(message)
+	{
+		this.HttpStatusCode = httpStatusCode;
+	}
+}
+
+/// <summary>
 /// Represents errors that occur due to user not being logged in
 /// </summary>
-public class NotLoggedInException : Exception
+public class NotLoggedInException : FeedTracHTTPException
 {
 	/// <summary>
 	/// Initializes a new NotLoggedInException
 	/// </summary>
-	public NotLoggedInException() : base("User is not logged in") {}
+	public NotLoggedInException() : base("User is not logged in", 401) {}
 }
 
 /// <summary>
 /// Represents errors that occur due the user not having sufficient roles 
 /// </summary>
-public class InsufficientRolesException : Exception
+public class InsufficientRolesException : FeedTracHTTPException
 {
 	/// <summary>
 	/// Initializes a new Insufficient Roles Exception
 	/// </summary>
-	public InsufficientRolesException() : base("You do not have the required roles to use this endpoint") {}
+	public InsufficientRolesException() : base("You do not have the required roles to use this endpoint", 401) {}
+}
+
+/// <summary>
+/// Represents errors that occur due to the user trying to access a resource they do not have access to
+/// </summary>
+public class UnauthorizedResourceAccessException : FeedTracHTTPException
+{
+	/// <summary>
+	/// Initialize a Unauthorized Resource Access Exception
+	/// </summary>
+	public UnauthorizedResourceAccessException() : base("You do not have access to the requested resource", 401) {}
 }
 
 /// <summary>
 /// Represents errors that occur when the user tries to reference a resource that cannot be found or does not exist
 /// </summary>
-public class ResourceNotFoundException : Exception
+public class ResourceNotFoundException : FeedTracHTTPException
 {
 	/// <summary>
 	/// Initializes a Resource Not Found Exception
 	/// </summary>
-	public ResourceNotFoundException() : base("Resource not found") {}
+	public ResourceNotFoundException() : base("Resource not found", 404) {}
 }
