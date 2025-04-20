@@ -40,8 +40,8 @@ public class ModuleController : Controller
     /// <response code="200">Returns user's modules</response>
     /// <response code="404">The user is not signed in</response>
     [HttpGet]
-    [ProducesResponseType(typeof(ModuleCollectionDto), 200)]
-    [ProducesResponseType(401)]
+    [ProducesResponseType(typeof(ModuleCollectionDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetUserModules()
     {
         List<Module> modules = await _moduleService.GetUserModulesAsync();
@@ -137,7 +137,8 @@ public class ModuleController : Controller
     /// </summary>
     /// <param name="moduleId"></param>
     /// <param name="teacherEmail"></param>
-    /// <returns></returns>
+    /// <response code="200">The teacher has been assigned</response>
+    /// <response code="404">The module or teacher was not found</response>
     [HttpPost("/{moduleId}/assignTeacher/byTeacherEmail")]
     [ProducesResponseType(typeof(string), 200)]
     [ProducesResponseType(404)]

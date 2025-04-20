@@ -48,11 +48,11 @@ public class IdentityController : ControllerBase
     /// API Endpoint for registring a student
     /// </summary>
     /// <param name="request">Body request containing the Registration information <see cref="RegisterUserRequest"/></param>
-    /// <returns>
-    ///     <b>200:</b> Tjh User Successfully registered<br/>
-    ///     <b>400:</b> Failed to register user <br/>
-    /// </returns>
+    /// <response code="200">User is successfully registered</response>
+    /// <response code="400">User could not be created with the credentials supplied</response>
     [HttpPost("student/register")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RegisterStudent([FromBody] RegisterUserRequest request)
     {
         var user = new ApplicationUser { UserName = request.Email, Email = request.Email, FirstName = request.FirstName, LastName = request.LastName };
@@ -71,12 +71,12 @@ public class IdentityController : ControllerBase
     /// Endpoint for registering a teacher
     /// </summary>
     /// <param name="request">Body request containing the Registration information <see cref="RegisterUserRequest"/></param>
-    /// <returns>
-    ///     <b>200:</b> The User Successfully registered<br/>
-    ///     <b>400:</b> Failed to register user <br/>
-    /// </returns>
+    /// <response code="200">User created successfully</response>
+    /// <response code="400">User could not be created with the credentials supplied</response>
     [Authorize(Roles = "Admin")]
     [HttpPost("teacher/register")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RegisterTeacher([FromBody] RegisterUserRequest request)
     {
         var user = new ApplicationUser { UserName = request.Email, Email = request.Email, FirstName = request.FirstName, LastName = request.LastName };
@@ -112,19 +112,22 @@ public class IdentityController : ControllerBase
     /// API Endpoint for logging in a student
     /// </summary>
     /// <param name="login"></param>
-    /// <returns></returns>
+    /// <response code="200">Login was successful</response>
+    /// <response code="400">User could not login with provided credentials</response>
     [HttpPost("student/login")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> StudentLogin([FromBody] StudentLoginRequest login)
     {
 
         var user = await _userManager.FindByEmailAsync(login.Email);
-        if (user == null) return Unauthorized("User not found");
+        if (user == null) return Unauthorized("Invalid credentials");
 
         // Check user role before allowing login
         var roles = await _userManager.GetRolesAsync(user);
         if (!roles.Contains("Student")) // Change condition as needed
         {
-            return Forbid("This endpoint is for student accounts only");
+            return BadRequest("This endpoint is for student accounts only");
         }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
@@ -138,8 +141,11 @@ public class IdentityController : ControllerBase
     /// API Endpoint for logging in a teacher
     /// </summary>
     /// <param name="login"></param>
-    /// <returns></returns>
+    /// <response code="200">Login successful</response>
+    /// <response code="400">User could not be logged in with provided credentials</response>
     [HttpPost("teacher/login")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> TeacherLogin([FromBody] TeacherLoginRequest login)
     {
         var user = await _userManager.FindByEmailAsync(login.Email);
@@ -149,7 +155,7 @@ public class IdentityController : ControllerBase
         var roles = await _userManager.GetRolesAsync(user);
         if (!roles.Contains("Teacher") && !roles.Contains("Admin")) // Change condition as needed
         {
-            return Unauthorized("Not a teacher account");
+            return BadRequest("Not a teacher account");
         }
 
 
@@ -172,7 +178,6 @@ public class IdentityController : ControllerBase
     /// Forgot password endpoint - not implemented currently
     /// </summary>
     /// <param name="request">Forgot password request containing the users email</param>
-    /// <returns></returns>
     [HttpPost("forgotPassword")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
@@ -211,8 +216,9 @@ public class IdentityController : ControllerBase
     /// <summary>
     /// Logout endpoint
     /// </summary>
+    /// <response code="200">Logout successful</response>
     [HttpPost("logout")]
-    [ProducesResponseType(200)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Logout()
     {
         await _signInManager.SignOutAsync();
@@ -222,9 +228,9 @@ public class IdentityController : ControllerBase
     /// <summary>
     /// Authentication Endpoint
     /// </summary>
-    /// <returns></returns>
+    /// <response code="200">Returns auth info</response>
     [HttpGet]
-    [ProducesResponseType(typeof(AuthSummaryResponse), 200)]
+    [ProducesResponseType(typeof(AuthSummaryResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> IsAuthenticated()
     {
         if (User.Identity != null && User.Identity.IsAuthenticated)

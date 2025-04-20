@@ -30,11 +30,14 @@ namespace FeedTrac.Server.Controllers
         /// Endpoint for getting image file
         /// </summary>
         /// <param name="imageId">The id of the image</param>
+        /// <response code="200">Returns Image</response>
+        /// <response code="403">User does not have access to the image</response>
+        /// <response code="404">Image could not be found</response>
         [HttpGet]
         [Route("{imageId}")]
-        [ProducesResponseType(typeof(FileContentResult), 200)]
-        [ProducesResponseType(403)]
-        [ProducesResponseType(404)]
+        [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetImage(int imageId)
         {
             var user = await _userManager.RequireUser();

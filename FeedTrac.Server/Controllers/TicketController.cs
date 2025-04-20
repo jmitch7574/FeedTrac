@@ -39,8 +39,11 @@ public class TicketController : Controller
     /// <summary>
     /// Gets the tickets for the current user. If the user is a student, it returns the tickets they have made. If the user is a teacher, it returns the tickets for all modules they are assigned to.
     /// </summary>
-    /// <returns></returns>
+    /// <response code="200">Returns user's tickets</response>
+    /// <response code="400">User does not have access to ticket system</response>
     [HttpGet]
+    [ProducesResponseType(typeof(TicketCollectionResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetMyTickets()
     {
         ApplicationUser user = await _userManager.RequireUser();
@@ -70,10 +73,13 @@ public class TicketController : Controller
     /// Get Specific Ticket Information
     /// </summary>
     /// <param name="id">ID of the ticket</param>
+    /// <response code="200">Successfully returns ticket information</response>
+    /// <response code="404">The ticket could not be found</response>
+    /// <response code="403">The user does not have access to this ticket</response>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(TicketResponseDto), 200)]
-    [ProducesResponseType(404)]
-    [ProducesResponseType(403)]
+    [ProducesResponseType(typeof(TicketResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetTicket(int id)
     {
         var user = await _userManager.RequireUser();
@@ -102,8 +108,12 @@ public class TicketController : Controller
     /// </summary>
     /// <param name="request">Ticket info, including title and an optional first message</param>
     /// <param name="moduleId">The id of the module this ticket should belong to</param>
-    /// <returns></returns>
+    /// <response code ="200">Ticket created successfully</response>
+    /// <response code ="404">Could not find referenced module</response>
     [HttpPost("{moduleId}/create")]
+    [ProducesResponseType(typeof(TicketResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CreateTicket([FromForm] TicketCreateRequest request, int moduleId)
     {
         var user = await _userManager.RequireUser();
@@ -158,7 +168,7 @@ public class TicketController : Controller
 
         await _context.SaveChangesAsync();
 
-        return Ok();
+        return Ok(new TicketResponseDto(ticket));
     }
 
 
@@ -167,8 +177,13 @@ public class TicketController : Controller
     /// </summary>
     /// <param name="request">The details of the message</param>
     /// <param name="ticketId">The ticket to append this message to</param>
-    /// <returns></returns>
+    /// <response code="200">Message added successfully</response>
+    /// <response code="404">Ticket not found</response>
+    /// <response code="403">User does not have access to referenced ticket</response>
     [HttpPost("{ticketId}/addMessage")]
+    [ProducesResponseType(typeof(TicketResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> AddMessageToTicket([FromForm] MessageCreateRequest request, int ticketId)
     {
         var user = await _userManager.RequireUser();
@@ -221,15 +236,20 @@ public class TicketController : Controller
         }
 
         await _context.SaveChangesAsync();
-        return Ok();
+        return Ok(new TicketResponseDto(ticket));
     }
 
     /// <summary>
     /// Mark a ticket as resolved
     /// </summary>
     /// <param name="ticketId">Which ticket to mark as resolved</param>
-    /// <returns></returns>
+    /// <response code="200">Ticket marked as resolved successfully</response>
+    /// <response code="404">Referenced ticket could not be found</response>
+    /// <response code="403">User does not have access to referenced ticket</response>
     [HttpPost("{ticketId}/markAsResolved")]
+    [ProducesResponseType(typeof(TicketResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> MarkAsResolved(int ticketId)
     {
         var user = await _userManager.RequireUser();
@@ -264,7 +284,7 @@ public class TicketController : Controller
         _context.Tickets.Update(ticket);
         await _context.SaveChangesAsync();
 
-        return Ok();
+        return Ok(new TicketResponseDto(ticket));
     }
 
 
