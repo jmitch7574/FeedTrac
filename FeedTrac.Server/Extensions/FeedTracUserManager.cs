@@ -77,7 +77,7 @@ public class FeedTracUserManager : UserManager<ApplicationUser>
     public async Task<ApplicationUser> RequireUser(params string[] roles)
     {
         if (_httpContextAccessor.HttpContext?.User.Identity is null)
-            throw new Exception("HttpContext is null");
+            throw new NotLoggedInException();
         
         if (!_httpContextAccessor.HttpContext.User.Identity.IsAuthenticated)
             throw new NotLoggedInException();
@@ -85,7 +85,7 @@ public class FeedTracUserManager : UserManager<ApplicationUser>
         ApplicationUser? user = await GetUserAsync(_httpContextAccessor.HttpContext.User);
         
         if (user == null)
-            throw new Exception("User not found");
+            throw new ResourceNotFoundException();
         
         foreach (var role in roles)
         {

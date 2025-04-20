@@ -62,6 +62,7 @@ public class IdentityController : ControllerBase
         {
             return BadRequest(result.Errors);
         }
+        
         await _userManager.AddToRoleAsync(user, "Student");
 
         return Ok();

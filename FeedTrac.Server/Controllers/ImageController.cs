@@ -36,7 +36,7 @@ namespace FeedTrac.Server.Controllers
         [HttpGet]
         [Route("{imageId}")]
         [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetImage(int imageId)
         {
@@ -57,14 +57,10 @@ namespace FeedTrac.Server.Controllers
                 .FirstOrDefaultAsync(i => i.Id == imageId);
 
             if (image == null)
-            {
-                return NotFound();
-            }
+                throw new ResourceNotFoundException();
 
             if (image.Message.Ticket.Module.StudentModule.Find(sm => sm.User.Id == user.Id) == null && image.Message.Ticket.Module.TeacherModule.Find(tm => tm.User.Id == user.Id) == null)
-            {
-                return Forbid("User does not have access to the ticket");
-            }
+                throw new UnauthorizedResourceAccessException();
 
             return File(image.ImageData, image.ImageType, image.ImageName);
         }
