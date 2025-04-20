@@ -1,11 +1,10 @@
 ﻿using FeedTrac.Server.Database;
+using FeedTrac.Server.Extensions;
 using FeedTrac.Server.Models.Responses.Modules;
 using FeedTrac.Server.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace FeedTrac.Server.Controllers;
 
@@ -21,6 +20,12 @@ public class ModuleController : Controller
     private readonly FeedTracUserManager _userManager;
     private readonly ModuleService _moduleService;
 
+    /// <summary>
+    /// Constructor for Module Controller
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="userManager"></param>
+    /// <param name="moduleService"></param>
     public ModuleController(ApplicationDbContext context, FeedTracUserManager userManager, ModuleService moduleService)
     {
         _context = context;
@@ -35,12 +40,12 @@ public class ModuleController : Controller
     /// <response code="200">Returns user's modules</response>
     /// <response code="404">The user is not signed in</response>
     [HttpGet]
-    [ProducesResponseType(typeof(UserModulesResponse), 200)]
+    [ProducesResponseType(typeof(ModuleCollectionDto), 200)]
     [ProducesResponseType(401)]
     public async Task<IActionResult> GetUserModules()
     {
         List<Module> modules = await _moduleService.GetUserModulesAsync();
-        return Ok(modules.Select(m => new ModuleResponse(m)));
+        return Ok(new ModuleCollectionDto(modules));
     }
 
     /// <summary>
@@ -50,12 +55,12 @@ public class ModuleController : Controller
     /// <response code="200">Returns user's modules</response>
     /// <response code="404">The user does not have permissions</response>
     [HttpGet("all")]
-    [ProducesResponseType(typeof(UserModulesResponse), 200)]
+    [ProducesResponseType(typeof(ModuleCollectionDto), 200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> GetAllModules()
     {
         var modules = await _moduleService.GetAllModulesAsync();
-        return Ok(modules.Select(m => new ModuleResponse(m)));
+        return Ok(new ModuleCollectionDto(modules));
     }
 
     /// <summary>
@@ -67,7 +72,7 @@ public class ModuleController : Controller
     /// <response code="400">Failed to join the module</response>
     /// <response code="404">The user is not signed in</response>
     [HttpPost("join")]
-    [ProducesResponseType(typeof(ModuleResponse), 200)]
+    [ProducesResponseType(typeof(ModuleDto), 200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> JoinModule(string joinCode)
     {
@@ -88,11 +93,13 @@ public class ModuleController : Controller
         module.StudentModule.Add(new StudentModule
         {
             UserId = userId,
-            ModuleId = module.Id
+            User = user,
+            ModuleId = module.Id,
+            Module = module
         });
         
         await _context.SaveChangesAsync();
-        return Ok(new ModuleResponse(module));
+        return Ok(new ModuleDto(module));
     }
 
     /// <summary>
@@ -103,23 +110,22 @@ public class ModuleController : Controller
     /// <response code="200">The teacher has been assigned</response>
     /// <response code="404">The module or teacher was not found</response>
     [HttpPost("/{moduleId}/assignTeacher/byTeacherId")]
-    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(string), 200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> AssignTeacherById(string moduleId, string teacherId)
     {
+        var user = await _userManager.RequireUser("Admin");
+        
         var module = await _context.Modules.FirstOrDefaultAsync(m => m.Id == int.Parse(moduleId));
         if (module == null)
             return NotFound("Module not found");
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == teacherId);
-        if (user == null)
-            return NotFound("User not found");
-
         module.TeacherModule.Add(new TeacherModule
         {
             UserId = user.Id,
-            ModuleId = module.Id
+            User = user,
+            ModuleId = module.Id,
+            Module = module
         });
 
         await _context.SaveChangesAsync();
@@ -133,18 +139,18 @@ public class ModuleController : Controller
     /// <param name="teacherEmail"></param>
     /// <returns></returns>
     [HttpPost("/{moduleId}/assignTeacher/byTeacherEmail")]
-    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(string), 200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> AssignTeacherByEmail(string moduleId, string teacherEmail)
     {
-        var module = await _context.Modules.FirstOrDefaultAsync(m => m.Id == int.Parse(moduleId));
+        var user =  await _userManager.RequireUser("Admin");
+        
+        var module = await _context.Modules
+            .Include(m => m.TeacherModule)
+            .FirstOrDefaultAsync(m => m.Id == int.Parse(moduleId));
+        
         if (module == null)
             return NotFound("Module not found");
-
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == teacherEmail);
-        if (user == null)
-            return NotFound("Teacher not found");
 
         List<string> userRoles = (await _userManager.GetRolesAsync(user)).ToList();
         if ((userRoles.Contains("Teacher") || userRoles.Contains("Admin")) == false)
@@ -157,7 +163,9 @@ public class ModuleController : Controller
         module.TeacherModule.Add(new TeacherModule
         {
             UserId = user.Id,
-            ModuleId = module.Id
+            User = user,
+            ModuleId = module.Id,
+            Module = module
         });
 
         await _context.SaveChangesAsync();
@@ -172,7 +180,7 @@ public class ModuleController : Controller
     /// <response code="200">Returns the module</response>
     /// <response code="404">The module was not found</response>
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(ModuleResponse), 200)]
+    [ProducesResponseType(typeof(ModuleDto), 200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> GetModule(int id)
     {
@@ -183,7 +191,7 @@ public class ModuleController : Controller
         if (module == null)
             throw new Exception("Module not found.");
 
-        return Ok(new ModuleResponse(module));
+        return Ok(new ModuleDto(module));
     }
 
     /// <summary>
@@ -222,19 +230,25 @@ public class ModuleController : Controller
     [Authorize]
     public async Task<IActionResult> LeaveModule(int id)
     {
-        var module = await _context.Modules.FirstOrDefaultAsync(m => m.Id == id);
+        var user = await _userManager.RequireUser("Student");
+        
+        var module = await _context.Modules
+            .Include(m =>  m.StudentModule)
+            .ThenInclude(sm => sm.User)
+            .FirstOrDefaultAsync(m => m.Id == id);
 
         if (module == null)
             return NotFound("Module not found");
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // This is the Identity User ID
-        if (module.StudentModule.FirstOrDefault(sm => sm.User == User.Identity) == null)
+        StudentModule? sm = module.StudentModule.FirstOrDefault(sm => sm.User == user);
+        
+        if (sm == null)
         {
             return NotFound("User not part of module");
         }
-
-        module.StudentModule.Remove(module.StudentModule.FirstOrDefault(sm => sm.User == User.Identity));
-
+        
+        module.StudentModule.Remove(sm);
+        await _context.SaveChangesAsync();
         return Ok();
     }
 
@@ -245,7 +259,7 @@ public class ModuleController : Controller
     /// <response code="200">The module was created</response>
     /// <response code="404">The user does not have permission</response>
     [HttpPost("/create")]
-    [ProducesResponseType(typeof(ModuleResponse), 200)]
+    [ProducesResponseType(typeof(ModuleDto), 200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> CreateModule(string name)
     {
@@ -257,6 +271,6 @@ public class ModuleController : Controller
 
         _context.Modules.Add(newModule);
         await _context.SaveChangesAsync();
-        return Ok(new ModuleResponse(newModule));
+        return Ok(new ModuleDto(newModule));
     }
 }

@@ -6,6 +6,9 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
+// I have no clue how to rename a migration so I'm gonna leave this here
+#pragma warning disable CS8981 // The type name only contains lower-cased ascii characters. Such names may become reserved for the language. 
+
 #nullable disable
 
 namespace FeedTrac.Server.Migrations

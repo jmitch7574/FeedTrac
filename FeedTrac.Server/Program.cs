@@ -2,27 +2,22 @@
 using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using FeedTrac.Server.Services;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using OtpNet;
-using System.Reflection;
-using System.Runtime.ConstrainedExecution;
 
 namespace FeedTrac.Server
 {
     /// <summary>
     /// The entry class of the project
     /// </summary>
-    public class Program
+    public abstract class Program
     {
         /// <summary>
         /// Create our custom roles
         /// </summary>
         /// <param name="serviceProvider">Service provider made in main</param>
         /// <returns></returns>
-        async static Task CreateRolesAsync(IServiceProvider serviceProvider)
+        static async Task CreateRolesAsync(IServiceProvider serviceProvider)
         {
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
@@ -38,10 +33,9 @@ namespace FeedTrac.Server
         }
 
 
-        async static Task CreateDefaultAdministrator(IServiceProvider serviceProvider)
+        static async Task CreateDefaultAdministrator(IServiceProvider serviceProvider)
         {
             var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
             var admin = await userManager.FindByEmailAsync("feedtrac-admin@lincoln.ac.uk");
             if (admin != null)
@@ -121,7 +115,7 @@ namespace FeedTrac.Server
             {
                 options.SignIn.RequireConfirmedEmail = false; // Optional
                 options.SignIn.RequireConfirmedPhoneNumber = false; // Optional
-                options.Tokens.AuthenticatorTokenProvider = default; // Remove 2FA providers
+                options.Tokens.AuthenticatorTokenProvider = null!; // Remove 2FA providers
             });
 
             builder.Services.ConfigureApplicationCookie(options =>

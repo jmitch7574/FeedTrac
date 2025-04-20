@@ -20,24 +20,24 @@ public class StudentModule
     /// </summary>
     [Column(TypeName ="text")]
     [Required]
-    public string UserId { get; set; }
+    public required string UserId { get; set; }
 
     /// <summary>
     /// The typed reference to the user in this relationship
     /// </summary>
     [ForeignKey(nameof(UserId))]
-    public ApplicationUser User { get; set; }
+    public required ApplicationUser User { get; set; }
 
     /// <summary>
     /// The ID of the module in this relationship
     /// </summary>
     [Column(TypeName = "integer")]
     [Required]
-    public int ModuleId { get; set; }
+    public required int ModuleId { get; set; }
 
     /// <summary>
     /// The typed reference to the user in this relationship
     /// </summary>
     [ForeignKey(nameof(ModuleId))]
-    public Module Module { get; set; }
+    public required Module Module { get; set; }
 }

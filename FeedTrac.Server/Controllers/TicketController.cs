@@ -1,8 +1,8 @@
 ﻿using FeedTrac.Server.Database;
+using FeedTrac.Server.Extensions;
 using FeedTrac.Server.Models.Forms.Ticket;
 using FeedTrac.Server.Models.Responses.Ticket;
 using FeedTrac.Server.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,7 +25,7 @@ public class TicketController : Controller
     /// Constructor for Ticket Controller
     /// </summary>
     /// <param name="context"></param>
-    /// <param name="userService"></param>
+    /// <param name="userManager"></param>
     /// <param name="moduleService"></param>
     /// <param name="imageService"></param>
     public TicketController(ApplicationDbContext context, FeedTracUserManager userManager, ModuleService moduleService, ImageService imageService)
@@ -77,8 +77,6 @@ public class TicketController : Controller
     public async Task<IActionResult> GetTicket(int id)
     {
         var user = await _userManager.RequireUser();
-        if (user is null)
-            return Unauthorized("User is not logged in");
         
         var ticket = await _context.Tickets
             .Include(ticket => ticket.Owner)
@@ -99,8 +97,14 @@ public class TicketController : Controller
         return Ok(new TicketResponseDto(ticket));
     }
 
+    /// <summary>
+    /// Endpoint for creating a ticket
+    /// </summary>
+    /// <param name="request">Ticket info, including title and an optional first message</param>
+    /// <param name="moduleId">The id of the module this ticket should belong to</param>
+    /// <returns></returns>
     [HttpPost("{moduleId}/create")]
-    public async Task<IActionResult> CreateTicket([FromForm] TicketCreateDto request, int moduleId)
+    public async Task<IActionResult> CreateTicket([FromForm] TicketCreateRequest request, int moduleId)
     {
         var user = await _userManager.RequireUser();
         
@@ -123,10 +127,11 @@ public class TicketController : Controller
         var ticket = new FeedbackTicket
         {
             Module = targetModule,
+            OwnerId = user.Id,
             Owner = user,
             Title = request.Title,
             CreatedOn = DateTime.UtcNow,
-            status = FeedbackTicket.TicketStatus.Open,
+            Status = FeedbackTicket.TicketStatus.Open,
             LastUpdated = DateTime.UtcNow
         };
 
@@ -157,12 +162,16 @@ public class TicketController : Controller
     }
 
 
+    /// <summary>
+    /// Adds a message update to a ticket
+    /// </summary>
+    /// <param name="request">The details of the message</param>
+    /// <param name="ticketId">The ticket to append this message to</param>
+    /// <returns></returns>
     [HttpPost("{ticketId}/addMessage")]
-    public async Task<IActionResult> AddMessageToTicket([FromForm] MessageCreateDto request, int ticketId)
+    public async Task<IActionResult> AddMessageToTicket([FromForm] MessageCreateRequest request, int ticketId)
     {
         var user = await _userManager.RequireUser();
-        if (user is null)
-            return Unauthorized("User is not logged in");
         
         var ticket = await _context.Tickets
             .Include(t => t.Owner)
@@ -197,7 +206,7 @@ public class TicketController : Controller
         // If the message is from a teacher, set the status to "In Progress"
         if (User.IsInRole("Teacher"))
         {
-            ticket.status = FeedbackTicket.TicketStatus.InProgress;
+            ticket.Status = FeedbackTicket.TicketStatus.InProgress;
         }
 
         // Update changes made to the ticket
@@ -215,6 +224,11 @@ public class TicketController : Controller
         return Ok();
     }
 
+    /// <summary>
+    /// Mark a ticket as resolved
+    /// </summary>
+    /// <param name="ticketId">Which ticket to mark as resolved</param>
+    /// <returns></returns>
     [HttpPost("{ticketId}/markAsResolved")]
     public async Task<IActionResult> MarkAsResolved(int ticketId)
     {
@@ -236,7 +250,7 @@ public class TicketController : Controller
             return Forbid("User does not have access to the ticket");
         }
 
-        ticket.status = FeedbackTicket.TicketStatus.Closed;
+        ticket.Status = FeedbackTicket.TicketStatus.Closed;
         ticket.LastUpdated = DateTime.UtcNow;
         ticket.Messages.Add(new FeedbackMessage
         {

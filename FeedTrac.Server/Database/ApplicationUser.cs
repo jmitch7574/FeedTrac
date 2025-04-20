@@ -3,8 +3,6 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using OtpNet;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using NuGet.Common;
 
 namespace FeedTrac.Server.Database
 {
@@ -66,7 +64,7 @@ namespace FeedTrac.Server.Database
         /// </summary>
         /// <param name="token">a TOTP</param>
         /// <returns>True if correct, false otherwise</returns>
-        public bool Confirm2FAToken(string token)
+        public bool Confirm2FaToken(string token)
         {
             var otp = new Totp(Base32Encoding.ToBytes(this.TwoFactorSecret), step: 30, mode: OtpHashMode.Sha1);
             return otp.VerifyTotp(token, out _);

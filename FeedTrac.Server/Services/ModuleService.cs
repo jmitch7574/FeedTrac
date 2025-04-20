@@ -1,25 +1,32 @@
 ﻿using FeedTrac.Server.Database;
-using FeedTrac.Server.Models.Responses.Modules;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using FeedTrac.Server.Extensions;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace FeedTrac.Server.Services;
 
+/// <summary>
+/// Service class for modules
+/// </summary>
 public class ModuleService
 {
     private readonly ApplicationDbContext _context;
     private readonly FeedTracUserManager _userManager;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ModuleService(ApplicationDbContext context, FeedTracUserManager userManager, IHttpContextAccessor httpContextAccessor)
+    /// <summary>
+    /// Initializes the module service
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="userManager"></param>
+    public ModuleService(ApplicationDbContext context, FeedTracUserManager userManager)
     {
         _context = context;
         _userManager = userManager;
-        _httpContextAccessor = httpContextAccessor;
     }
 
+    /// <summary>
+    /// Returns all modules that a user has access to
+    /// </summary>
+    /// <returns></returns>
     public async Task<List<Module>> GetUserModulesAsync()
     {
         // Get our module
@@ -39,6 +46,10 @@ public class ModuleService
         return modules;
     }
 
+    /// <summary>
+    /// Gets all modules
+    /// </summary>
+    /// <returns></returns>
     public async Task<List<Module>> GetAllModulesAsync()
     {
         await _userManager.RequireUser("Admin");
@@ -49,6 +60,13 @@ public class ModuleService
         return modules;
     }
 
+/*
+    /// <summary>
+    /// Gets module by specific ID
+    /// </summary>
+    /// <param name="id">ID of the module to get</param>
+    /// <returns></returns>
+    /// <exception cref="Exception">Module cannot be found</exception>
     public async Task<Module> GetModuleAsync(int id)
     {
         var module = await _context.Modules.Where(m => m.Id == id)
@@ -60,4 +78,5 @@ public class ModuleService
 
         return module;
     }
+*/
 }

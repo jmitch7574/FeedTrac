@@ -1,11 +1,18 @@
-﻿using FeedTrac.Server;
-using FeedTrac.Server.Database;
+﻿using FeedTrac.Server.Database;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
+namespace FeedTrac.Server.Extensions;
+
+/// <summary>
+/// Manager Service for FeedTrac Users
+/// </summary>
 public class FeedTracUserManager : UserManager<ApplicationUser>
 {
-    public IHttpContextAccessor _httpContextAccessor;
+    /// <summary>
+    /// HTTP context used to get user claim
+    /// </summary>
+    private readonly IHttpContextAccessor _httpContextAccessor;
     
     /// <summary>
     /// 
@@ -19,6 +26,7 @@ public class FeedTracUserManager : UserManager<ApplicationUser>
     /// <param name="errors"></param>
     /// <param name="services"></param>
     /// <param name="logger"></param>
+    /// <param name="httpContextAccessor"></param>
     public FeedTracUserManager(
         IUserStore<ApplicationUser> store,
         IOptions<IdentityOptions> optionsAccessor,
@@ -79,7 +87,6 @@ public class FeedTracUserManager : UserManager<ApplicationUser>
         if (user == null)
             throw new Exception("User not found");
         
-        var userRoles = (await GetRolesAsync(user)).ToList();
         foreach (var role in roles)
         {
             if (!(await IsInRoleAsync(user, role)))
