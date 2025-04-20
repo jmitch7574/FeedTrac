@@ -1,9 +1,12 @@
-﻿using FeedTrac.Server.Database;
+﻿using FeedTrac.Server;
+using FeedTrac.Server.Database;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
 public class FeedTracUserManager : UserManager<ApplicationUser>
 {
+    public IHttpContextAccessor _httpContextAccessor;
+    
     /// <summary>
     /// 
     /// </summary>
@@ -25,9 +28,11 @@ public class FeedTracUserManager : UserManager<ApplicationUser>
         ILookupNormalizer keyNormalizer,
         IdentityErrorDescriber errors,
         IServiceProvider services,
-        ILogger<UserManager<ApplicationUser>> logger)
+        ILogger<UserManager<ApplicationUser>> logger,
+        IHttpContextAccessor httpContextAccessor)
         : base(store, optionsAccessor, passwordHasher, userValidators, passwordValidators, keyNormalizer, errors, services, logger)
     {
+        _httpContextAccessor = httpContextAccessor;
     }
 
     /// <summary>
@@ -49,5 +54,38 @@ public class FeedTracUserManager : UserManager<ApplicationUser>
         }
 
         return await base.CreateAsync(user, password);
+    }
+    
+    
+    /// <summary>
+    /// Function that can be used within endpoints to require a user be logged in with optional roles.
+    /// An Exception will be thrown and caught by the middleware if a user does not meet the criteria
+    /// </summary>
+    /// <param name="roles">The roles the user requires</param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
+    /// <exception cref="NotLoggedInException"></exception>
+    /// <exception cref="InsufficientRolesException"></exception>
+    public async Task<ApplicationUser> RequireUser(params string[] roles)
+    {
+        if (_httpContextAccessor.HttpContext?.User.Identity is null)
+            throw new Exception("HttpContext is null");
+        
+        if (!_httpContextAccessor.HttpContext.User.Identity.IsAuthenticated)
+            throw new NotLoggedInException();
+
+        ApplicationUser? user = await GetUserAsync(_httpContextAccessor.HttpContext.User);
+        
+        if (user == null)
+            throw new Exception("User not found");
+        
+        var userRoles = (await GetRolesAsync(user)).ToList();
+        foreach (var role in roles)
+        {
+            if (!(await IsInRoleAsync(user, role)))
+                throw new InsufficientRolesException();
+        }
+        
+        return user;
     }
 }

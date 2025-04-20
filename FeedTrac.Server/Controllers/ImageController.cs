@@ -1,11 +1,8 @@
 ﻿using FeedTrac.Server.Database;
 using FeedTrac.Server.Services;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Sockets;
-
 namespace FeedTrac.Server.Controllers
 {
     [ApiController]
@@ -13,36 +10,38 @@ namespace FeedTrac.Server.Controllers
     public class ImageController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserService _userService;
+        private readonly FeedTracUserManager _userManager;
 
-        public ImageController(ApplicationDbContext context, UserService userService)
+        public ImageController(ApplicationDbContext context, FeedTracUserManager userManager)
         {
             _context = context;
-            _userService = userService;
+            _userManager = userManager;
         }
 
         [HttpGet]
         [Route("{imageId}")]
         public async Task<IActionResult> GetImage(int imageId)
         {
+            var user = await _userManager.RequireUser();
+            
             // Simulate fetching the image from a database or storage
             MessageImage? image = await _context.Images
                 .Include(i => i.Message)
                     .ThenInclude(m => m.Ticket)
                     .ThenInclude(t => t.Module)
                     .ThenInclude(m => m.StudentModule)
+                    .ThenInclude(u => u.User)
                 .Include(i => i.Message)
                     .ThenInclude(m => m.Ticket)
                     .ThenInclude(t => t.Module)
                     .ThenInclude(m => m.TeacherModule)
+                    .ThenInclude(u => u.User)
                 .FirstOrDefaultAsync(i => i.Id == imageId);
 
             if (image == null)
             {
                 return NotFound();
             }
-
-            var user = await _userService.GetCurrentUserAsync();
 
             if (image.Message.Ticket.Module.StudentModule.Find(sm => sm.User.Id == user.Id) == null && image.Message.Ticket.Module.TeacherModule.Find(tm => tm.User.Id == user.Id) == null)
             {

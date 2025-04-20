@@ -112,11 +112,10 @@ namespace FeedTrac.Server
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddApiEndpoints();
 
-            builder.Services.AddScoped<UserService>();
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ModuleService>();
-            builder.Services.AddScoped<FeedbackService>();
             builder.Services.AddScoped<ImageService>();
-            builder.Services.AddScoped<UserManager<ApplicationUser>, FeedTracUserManager>();
+            builder.Services.AddScoped<FeedTracUserManager>();
 
             builder.Services.Configure<IdentityOptions>(options =>
             {
@@ -160,6 +159,7 @@ namespace FeedTrac.Server
 
             app.UseHttpsRedirection();
             app.MapControllers();
+            
 
             app.UseAuthorization();
 

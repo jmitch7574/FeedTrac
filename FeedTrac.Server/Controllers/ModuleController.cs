@@ -18,14 +18,12 @@ public class ModuleController : Controller
 {
 
     private readonly ApplicationDbContext _context;
-    private readonly UserService _userService;
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly FeedTracUserManager _userManager;
     private readonly ModuleService _moduleService;
 
-    public ModuleController(ApplicationDbContext context, UserService userService, UserManager<ApplicationUser> userManager, ModuleService moduleService)
+    public ModuleController(ApplicationDbContext context, FeedTracUserManager userManager, ModuleService moduleService)
     {
         _context = context;
-        _userService = userService;
         _userManager = userManager;
         _moduleService = moduleService;
     }
@@ -41,15 +39,8 @@ public class ModuleController : Controller
     [ProducesResponseType(401)]
     public async Task<IActionResult> GetUserModules()
     {
-        try
-        {
-            var modules = await _moduleService.GetUserModulesAsync();
-            return Ok(new UserModulesResponse(modules));
-        }
-        catch (Exception e)
-        {
-            return Unauthorized(e.Message);
-        }
+        List<Module> modules = await _moduleService.GetUserModulesAsync();
+        return Ok(modules.Select(m => new ModuleResponse(m)));
     }
 
     /// <summary>
@@ -59,13 +50,12 @@ public class ModuleController : Controller
     /// <response code="200">Returns user's modules</response>
     /// <response code="404">The user does not have permissions</response>
     [HttpGet("all")]
-    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(UserModulesResponse), 200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> GetAllModules()
     {
-        var modules = await _context.Modules.ToListAsync();
-        return Ok(new UserModulesResponse(modules));
+        var modules = await _moduleService.GetAllModulesAsync();
+        return Ok(modules.Select(m => new ModuleResponse(m)));
     }
 
     /// <summary>
@@ -77,23 +67,32 @@ public class ModuleController : Controller
     /// <response code="400">Failed to join the module</response>
     /// <response code="404">The user is not signed in</response>
     [HttpPost("join")]
-    [Authorize(Roles = "Student")]
     [ProducesResponseType(typeof(ModuleResponse), 200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> JoinModule(string joinCode)
     {
-        if (_userService.GetCurrentUserId() == null)
-            return Unauthorized("You must be signed in to join a module");
+        var user = await _userManager.RequireUser("Student");
 
-        try
+        var userId = user.Id;
+        var module = await _context.Modules
+            .Include(m => m.StudentModule)
+            .Where(m => m.JoinCode == joinCode)
+            .FirstOrDefaultAsync();
+        
+        if (module == null)
+            throw new Exception("Module not found.");
+
+        if (module.StudentModule.Find(sm => sm.UserId == userId && sm.Module == module) != null)
+            throw new Exception("User is already a part of the module");
+
+        module.StudentModule.Add(new StudentModule
         {
-            var module = await _moduleService.JoinModule(joinCode);
-            return Ok(new ModuleResponse(module));
-        }
-        catch(Exception e)
-        {
-            return BadRequest(e.Message);
-        }
+            UserId = userId,
+            ModuleId = module.Id
+        });
+        
+        await _context.SaveChangesAsync();
+        return Ok(new ModuleResponse(module));
     }
 
     /// <summary>
@@ -177,15 +176,14 @@ public class ModuleController : Controller
     [ProducesResponseType(404)]
     public async Task<IActionResult> GetModule(int id)
     {
-        try
-        {
-            var module = await _moduleService.GetModuleAsync(id);
-            return Ok(new ModuleResponse(module));
-        }
-        catch
-        {
-            return NotFound("Module not found");
-        }
+        var module = await _context.Modules.Where(m => m.Id == id)
+            .Include(m => m.StudentModule)
+            .FirstOrDefaultAsync();
+
+        if (module == null)
+            throw new Exception("Module not found.");
+
+        return Ok(new ModuleResponse(module));
     }
 
     /// <summary>
@@ -200,19 +198,16 @@ public class ModuleController : Controller
     [ProducesResponseType(404)]
     public async Task<IActionResult> DeleteModule(int id)
     {
-        var module = await _context.Modules.FirstOrDefaultAsync(m => m.Id == id);
-        if (module == null)
-            return NotFound("Module not found");
+        Module? targetModule = await _context.Modules
+            .FirstOrDefaultAsync(m => m.Id == id);
 
-        try
-        {
-            await _moduleService.DeleteModuleAsync(id);
-            return Ok("Module deleted");
-        }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }   
+        if (targetModule == null)
+            throw new ResourceNotFoundException();
+
+        _context.Modules.Remove(targetModule);
+        await _context.SaveChangesAsync();
+
+        return Ok();
     }
 
     /// <summary>
@@ -250,15 +245,18 @@ public class ModuleController : Controller
     /// <response code="200">The module was created</response>
     /// <response code="404">The user does not have permission</response>
     [HttpPost("/create")]
-    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(ModuleResponse), 200)]
     [ProducesResponseType(404)]
     public async Task<IActionResult> CreateModule(string name)
     {
-        if (_userService.GetCurrentUserId() == null)
-            return Unauthorized("You must be signed in to create a module");
+        Module newModule = new Module
+        {
+            Name = name,
+            JoinCode = Guid.NewGuid().ToString().Substring(0, 6)
+        };
 
-        var module = await _moduleService.CreateModuleAsync(name);
-        return Ok(module);
+        _context.Modules.Add(newModule);
+        await _context.SaveChangesAsync();
+        return Ok(new ModuleResponse(newModule));
     }
 }

@@ -5,21 +5,20 @@ namespace FeedTrac.Server.Models.Responses.Modules
 {
     public class ModuleResponse
     {
-        [JsonIgnore]
-        public Module Module;
-
         [JsonPropertyName("id")]
-        public int Id => Module.Id;
+        public int Id { get; set; }
 
         [JsonPropertyName("name")]
-        public string Name => Module.Name;
+        public string Name { get; set; }
 
         [JsonPropertyName("joinCode")]
-        public string JoinCode => Module.JoinCode;
+        public string JoinCode { get; set; }
 
         public ModuleResponse(Module module)
         {
-            Module = module;
+            Id = module.Id;
+            Name = module.Name;
+            JoinCode = module.JoinCode;
         }
     }
 }

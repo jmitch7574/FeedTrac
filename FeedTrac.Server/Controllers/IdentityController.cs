@@ -24,7 +24,7 @@ using FeedTrac.Server.Services;
 using FeedTrac.Server.Models.Responses.Identity;
 using OtpNet;
 
-namespace FeedTrac.Controllers
+namespace FeedTrac.Server.Controllers
 {
     /// <summary>
     /// A set of endpoints for managing user sign-ins and sign-ups
