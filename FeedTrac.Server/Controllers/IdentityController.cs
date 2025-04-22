@@ -74,12 +74,12 @@ public class IdentityController : ControllerBase
     /// <param name="request">Body request containing the Registration information <see cref="RegisterUserRequest"/></param>
     /// <response code="200">User created successfully</response>
     /// <response code="400">User could not be created with the credentials supplied</response>
-    [Authorize(Roles = "Admin")]
     [HttpPost("teacher/register")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RegisterTeacher([FromBody] RegisterUserRequest request)
     {
+        await _userManager.RequireUser("Admin");
         var user = new ApplicationUser { UserName = request.Email, Email = request.Email, FirstName = request.FirstName, LastName = request.LastName };
         var result = await _userManager.CreateAsync(user, request.Password);
 

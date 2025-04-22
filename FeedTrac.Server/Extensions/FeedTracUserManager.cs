@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
+
 namespace FeedTrac.Server.Extensions;
 
 /// <summary>
@@ -87,11 +88,9 @@ public class FeedTracUserManager : UserManager<ApplicationUser>
         if (user == null)
             throw new ResourceNotFoundException();
         
-        foreach (var role in roles)
-        {
-            if (!(await IsInRoleAsync(user, role)))
-                throw new InsufficientRolesException();
-        }
+        if (roles.Length > 0)
+            if (! await roles.ToAsyncEnumerable().AnyAwaitAsync(async r => await IsInRoleAsync(user, r)))
+                    throw new InsufficientRolesException();
         
         return user;
     }

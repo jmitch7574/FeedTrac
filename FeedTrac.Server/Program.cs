@@ -12,6 +12,8 @@ namespace FeedTrac.Server
     /// </summary>
     public abstract class Program
     {
+        public static string TEST_ADMIN_2FA = "VMNAYBBTP4PHHMNF53O2W5UGRJDD442G";
+        
         /// <summary>
         /// Create our custom roles
         /// </summary>
@@ -40,6 +42,9 @@ namespace FeedTrac.Server
             var admin = await userManager.FindByEmailAsync("feedtrac-admin@lincoln.ac.uk");
             if (admin != null)
             {
+                // Check the admins 2FA secret is correct
+                admin.TwoFactorSecret = TEST_ADMIN_2FA;
+                await userManager.UpdateAsync(admin);
                 return;
             }
 
@@ -50,11 +55,6 @@ namespace FeedTrac.Server
                 LastName = "Admin",
                 Email = "feedtrac-admin@lincoln.ac.uk"
             };
-
-
-
-            // Generate and manually set the key (e.g., store in DB)
-            var key = "VMNAYBBTP4PHHMNF53O2W5UGRJDD442G";
 
             var result = await userManager.CreateAsync(admin, "Password123!");
             if (!result.Succeeded)
@@ -68,7 +68,7 @@ namespace FeedTrac.Server
 
 
             await userManager.AddToRoleAsync(admin, "Admin");
-            admin.TwoFactorSecret = key;
+            admin.TwoFactorSecret = TEST_ADMIN_2FA;
 
 
             await userManager.UpdateAsync(admin);
