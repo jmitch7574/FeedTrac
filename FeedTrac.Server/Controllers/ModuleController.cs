@@ -78,130 +78,48 @@ public class ModuleController : Controller
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> JoinModule(string joinCode)
     {
-        var user = await _userManager.RequireUser("Student");
+        var user = await _userManager.RequireUser("Student", "Teacher");
 
         var userId = user.Id;
         var module = await _context.Modules
             .Include(m => m.StudentModule)
+            .Include(m => m.TeacherModule)
             .Where(m => m.JoinCode == joinCode)
             .FirstOrDefaultAsync();
 
         if (module == null)
             throw new ResourceNotFoundException();
 
-        if (module.StudentModule.Find(sm => sm.UserId == userId && sm.Module == module) != null)
-            return BadRequest(new { error = "User is already a part of this module" });
-
-        module.StudentModule.Add(new StudentModule
+        if (await _userManager.IsInRoleAsync(user, "Student"))
         {
-            UserId = userId,
-            User = user,
-            ModuleId = module.Id,
-            Module = module
-        });
+            if (module.StudentModule.Find(sm => sm.UserId == userId && sm.Module == module) != null)
+                return BadRequest(new { error = "User is already a part of this module" });
+
+            module.StudentModule.Add(new StudentModule
+            {
+                UserId = userId,
+                User = user,
+                ModuleId = module.Id,
+                Module = module
+            });
+        }
+        if (await _userManager.IsInRoleAsync(user, "Teacher"))
+        {
+            if (module.TeacherModule.Find(sm => sm.UserId == userId && sm.Module == module) != null)
+                return BadRequest(new { error = "User is already a part of this module" });
+
+            module.TeacherModule.Add(new TeacherModule
+            {
+                UserId = userId,
+                User = user,
+                ModuleId = module.Id,
+                Module = module
+            });
+        }
         
         await _context.SaveChangesAsync();
         return Ok(new ModuleDto(module));
     }
-
-    /// <summary>
-    /// Assigns a Teacher to a module
-    /// </summary>
-    /// <param name="moduleId"></param>
-    /// <param name="teacherId"></param>
-    /// <response code="200">The teacher has been assigned</response>
-    /// <response code="404">The module or teacher was not found</response>
-    /// <response code="401">The user is not authorized</response>
-    /// <response code="400">The teacher could not be assigned</response>
-    [HttpPost("/{moduleId}/assignTeacher/byTeacherId")]
-    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> AssignTeacherById(string moduleId, string teacherId)
-    {
-        var user =  await _userManager.RequireUser("Admin");
-        
-        var module = await _context.Modules
-            .Include(m => m.TeacherModule)
-            .FirstOrDefaultAsync(m => m.Id == int.Parse(moduleId));
-
-        if (module == null)
-            throw new ResourceNotFoundException();
-        
-        var teacher = _context.Users.FirstOrDefault(u => u.Id == teacherId);
-        
-        if (teacher == null)
-            throw new ResourceNotFoundException();
-        
-        if (!(await _userManager.IsInRoleAsync(teacher, "Teacher")))
-            return BadRequest(new { error = "Given user is not a teacher" });
-
-        if (module.TeacherModule.Find(sm => sm.UserId == user.Id && sm.Module == module) != null)
-            return BadRequest(new { error = "Teacher is already assigned to the module" });
-
-
-        module.TeacherModule.Add(new TeacherModule
-        {
-            UserId = user.Id,
-            User = user,
-            ModuleId = module.Id,
-            Module = module
-        });
-
-        await _context.SaveChangesAsync();
-        return Ok("Teacher assigned");
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="moduleId"></param>
-    /// <param name="teacherEmail"></param>
-    /// <response code="200">The teacher has been assigned</response>
-    /// <response code="404">The module or teacher was not found</response>
-    /// <response code="401">The user is not authorized</response>
-    /// <response code="400">The teacher could not be assigned</response>
-    [HttpPost("/{moduleId}/assignTeacher/byTeacherEmail")]
-    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> AssignTeacherByEmail(string moduleId, string teacherEmail)
-    {
-        var user =  await _userManager.RequireUser("Admin");
-        
-        var module = await _context.Modules
-            .Include(m => m.TeacherModule)
-            .FirstOrDefaultAsync(m => m.Id == int.Parse(moduleId));
-
-        if (module == null)
-            throw new ResourceNotFoundException();
-        
-        var teacher = _context.Users.FirstOrDefault(u => u.Email == teacherEmail);
-        
-        if (teacher == null)
-            throw new ResourceNotFoundException();
-        
-        if (!(await _userManager.IsInRoleAsync(teacher, "Teacher")))
-            return BadRequest(new { error = "Given user is not a teacher" });
-
-        if (module.TeacherModule.Find(sm => sm.UserId == user.Id && sm.Module == module) != null)
-            return BadRequest(new { error = "Teacher is already assigned to the module" });
-
-
-        module.TeacherModule.Add(new TeacherModule
-        {
-            UserId = user.Id,
-            User = user,
-            ModuleId = module.Id,
-            Module = module
-        });
-
-        await _context.SaveChangesAsync();
-        return Ok("Teacher assigned");
-    }
-
 
     /// <summary>
     /// Get module info
@@ -303,7 +221,7 @@ public class ModuleController : Controller
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateModule(string name)
     {
-        await _userManager.RequireUser("Admin");
+        var user = await _userManager.RequireUser("Teacher");
         
         Module newModule = new Module
         {
@@ -313,6 +231,20 @@ public class ModuleController : Controller
 
         _context.Modules.Add(newModule);
         await _context.SaveChangesAsync();
+        
+        newModule.TeacherModule.Add(
+            new  TeacherModule
+            {
+                User = user,
+                UserId = user.Id,
+                Module = newModule,
+                ModuleId = newModule.Id
+            }
+            );
+        
+        _context.Modules.Update(newModule);
+        await _context.SaveChangesAsync();
+        
         return Ok(new ModuleDto(newModule));
     }
 }
