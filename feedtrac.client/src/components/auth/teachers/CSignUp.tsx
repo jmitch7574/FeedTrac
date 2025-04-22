@@ -5,19 +5,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
-import type { studentRegister as studentRegisterType } from "@/types/Index";
-import { registerStudent } from "@/hooks/useAuth";
+import type { teacherRegister } from "@/types/Index";
+import { registerTeacher } from "@/hooks/useAuth";
 
 export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
   const [FirstName, setFirstName] = useState("test");
   const [LastName, setLastName] = useState("test");
-  const [Email, setEmail] = useState("test@test.com");
+  const [Email, setEmail] = useState("teacher@lincoln.ac.uk");
   const [Password, setPassword] = useState("Test1234!");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const payload: studentRegisterType = {
+    const payload: teacherRegister = {
       FirstName,
       LastName,
       Email,
@@ -25,7 +25,7 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
     };
 
     try {
-      const res = await registerStudent(payload);
+      const res = await registerTeacher(payload);
       console.log("Success:", res.token); // store token or redirect
     } catch (err) {
       console.error("Registration failed:", err);
@@ -36,7 +36,7 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className='text-2xl'>Create an account</CardTitle>
+          <CardTitle className='text-2xl'>Create a teacher's account</CardTitle>
           <CardDescription>Enter your details below to sign up for an account</CardDescription>
         </CardHeader>
         <CardContent>

@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 import { useState } from "react";
-import { studentLogin } from "@/types/Index";
-import { loginStudent } from "@/hooks/useAuth";
+import { teacherLogin as teacherLoginType } from "@/types/Index";
+import { loginTeacher } from "@/hooks/useAuth";
 import { useNavigate } from "react-router";
 
 export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
@@ -19,14 +19,15 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
 
     console.log("Sign in form submitted successfully");
 
-    const payload: studentLogin = {
+    const payload: teacherLoginType = {
       Email,
       Password,
       rememberMe: true,
+      twoFactorCode: "",
     };
 
     try {
-      const res = await loginStudent(payload);
+      const res = await loginTeacher(payload);
       console.log("Success:", res.token); // store token or redirect
       navigate("/"); // redirect to home page
     } catch (err) {
@@ -38,7 +39,7 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className='text-2xl'>Sign into your account</CardTitle>
+          <CardTitle className='text-2xl'>Sign into your teacher's account</CardTitle>
           <CardDescription>Enter your details below to signin to your account</CardDescription>
         </CardHeader>
         <CardContent>

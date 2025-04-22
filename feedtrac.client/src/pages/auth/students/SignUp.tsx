@@ -1,6 +1,6 @@
-import { CSignIn } from "@/components/auth/CSignIn";
+import { CSignUp } from "@/components/auth/students/CSignUp";
 
-const SignIn = () => {
+const SignUp = () => {
   const logo = "/University_of_Lincoln_logo_landscape.png";
 
   return (
@@ -9,10 +9,10 @@ const SignIn = () => {
         <div className='flex items-center justify-center rounded-md text-primary-foreground mb-4 px-4 '>
           <img src={logo} className='w-full h-full object-cover' />
         </div>
-        <CSignIn />
+        <CSignUp />
       </div>
     </div>
   );
 };
 
-export default SignIn;
+export default SignUp;
