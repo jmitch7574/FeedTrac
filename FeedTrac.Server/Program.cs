@@ -1,4 +1,3 @@
-
 using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using FeedTrac.Server.Services;
@@ -81,6 +80,9 @@ namespace FeedTrac.Server
         /// <returns></returns>
         public static async Task Main(string[] args)
         {
+            // Load our environment variables
+            EnvironmentVariables.Load();
+            
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
@@ -110,6 +112,7 @@ namespace FeedTrac.Server
             builder.Services.AddScoped<ModuleService>();
             builder.Services.AddScoped<ImageService>();
             builder.Services.AddScoped<FeedTracUserManager>();
+            builder.Services.AddScoped<EmailService>();
 
             builder.Services.Configure<IdentityOptions>(options =>
             {

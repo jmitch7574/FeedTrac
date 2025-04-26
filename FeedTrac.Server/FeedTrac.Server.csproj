@@ -36,6 +36,7 @@
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="doxygen $(ProjectDir)/Docs/Doxyfile" />
+    <Copy SourceFiles=".env" DestinationFolder="$(OutDir)"/>
   </Target>
 
 </Project>
