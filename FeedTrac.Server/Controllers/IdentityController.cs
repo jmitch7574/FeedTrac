@@ -4,7 +4,6 @@
 // Last Modified By: Jake Mitchell
 
 using System.Text;
-using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
@@ -12,8 +11,8 @@ using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using Microsoft.AspNetCore.Identity.Data;
 using FeedTrac.Server.Models.Forms;
-using Microsoft.AspNetCore.Authorization;
 using FeedTrac.Server.Models.Responses.Identity;
+using FeedTrac.Server.Services;
 using OtpNet;
 
 namespace FeedTrac.Server.Controllers;
@@ -27,21 +26,21 @@ public class IdentityController : ControllerBase
 {
     private readonly FeedTracUserManager _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly IEmailSender<ApplicationUser> _emailSender;
+    private readonly EmailService _emailService;
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="userManager"></param>
     /// <param name="signInManager"></param>
-    /// <param name="emailSender"></param>
+    /// <param name="emailService"></param>
     public IdentityController(FeedTracUserManager userManager,
                               SignInManager<ApplicationUser> signInManager,
-                              IEmailSender<ApplicationUser> emailSender)
+                              EmailService emailService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
-        _emailSender = emailSender;
+        _emailService = emailService;
     }
 
     /// <summary>
@@ -101,7 +100,9 @@ public class IdentityController : ControllerBase
 
         // Update the user with the changes
         await _userManager.UpdateAsync(user);
-
+        
+        await _emailService.TeacherWelcomeEmail(user, request.Password);
+        
         RegisteredTeacher response = new RegisteredTeacher
         {
             TwoFactorKey = key
@@ -185,9 +186,9 @@ public class IdentityController : ControllerBase
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user != null && await _userManager.IsEmailConfirmedAsync(user))
         {
-            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
-            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-            await _emailSender.SendPasswordResetCodeAsync(user, request.Email, HtmlEncoder.Default.Encode(code));
+            //var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+            //code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            //await _emailSender.SendPasswordResetCodeAsync(user, request.Email, HtmlEncoder.Default.Encode(code));
         }
         return Ok();
     }

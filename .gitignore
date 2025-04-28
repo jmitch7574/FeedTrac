@@ -9,6 +9,7 @@
 *.user
 *.userosscache
 *.sln.docstates
+*.env
 
 # Auto generated documentation
 FeedTrac.Server/[Dd]ocs/docs.xml

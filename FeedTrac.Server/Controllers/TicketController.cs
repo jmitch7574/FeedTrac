@@ -20,6 +20,7 @@ public class TicketController : Controller
     private readonly FeedTracUserManager _userManager;
     private readonly ModuleService _moduleService;
     private readonly ImageService _imageService;
+    private readonly EmailService _emailService;
 
     /// <summary>
     /// Constructor for Ticket Controller
@@ -28,12 +29,13 @@ public class TicketController : Controller
     /// <param name="userManager"></param>
     /// <param name="moduleService"></param>
     /// <param name="imageService"></param>
-    public TicketController(ApplicationDbContext context, FeedTracUserManager userManager, ModuleService moduleService, ImageService imageService)
+    public TicketController(ApplicationDbContext context, FeedTracUserManager userManager, ModuleService moduleService, ImageService imageService, EmailService emailService)
     {
         _context = context;
         _userManager = userManager;
         _moduleService = moduleService;
         _imageService = imageService;
+        _emailService = emailService;
     }
 
     /// <summary>
@@ -118,6 +120,8 @@ public class TicketController : Controller
         var targetModule = await _context.Modules
             .Include(m => m.StudentModule)
                 .ThenInclude(sm => sm.User)
+            .Include(m => m.TeacherModule)
+            .   ThenInclude(tm => tm.User)
             .FirstOrDefaultAsync(m => m.Id == moduleId);
 
         if (targetModule == null)
@@ -161,6 +165,8 @@ public class TicketController : Controller
 
         await _context.SaveChangesAsync();
 
+        _emailService.NotifyTeachersAboutTicket(ticket);
+
         return Ok(new TicketResponseDto(ticket));
     }
 
@@ -184,8 +190,9 @@ public class TicketController : Controller
         var ticket = await _context.Tickets
             .Include(t => t.Owner)
             .Include(t => t.Module)
+            .Include(t => t.Module)
                 .ThenInclude(m => m.TeacherModule)
-                .ThenInclude(m => m.User)
+                    .ThenInclude(tm => tm.User)
             .FirstOrDefaultAsync(t => t.TicketId == ticketId);
 
         if (ticket == null)
@@ -225,6 +232,8 @@ public class TicketController : Controller
         }
 
         await _context.SaveChangesAsync();
+        
+        await _emailService.NotifyTicketMessage(message);
         return Ok(new TicketResponseDto(ticket));
     }
 
@@ -271,6 +280,8 @@ public class TicketController : Controller
         _context.Tickets.Update(ticket);
         await _context.SaveChangesAsync();
 
+        await _emailService.TicketResolved(ticket);
+        
         return Ok(new TicketResponseDto(ticket));
     }
 
