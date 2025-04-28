@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Mail;
 using FeedTrac.Server.Database;
+using Microsoft.AspNetCore.Identity.Data;
 
 namespace FeedTrac.Server.Services;
 
@@ -131,6 +132,19 @@ public class EmailService
 				              """
 			);
 		}
+	}
+
+	public async Task ForgotPassword(string email, string code )
+	{
+		await SendEmailAsync(
+			to: email,
+			subject: "FeedTrac Password Reset",
+			htmlContent: $"""
+			              <p>Hello</p>
+			              <p>{code} is your password reset token</p>
+			              <p>If you did not make this request, please ignore this email
+			              """
+		);
 	}
 	
 	/// <summary>
