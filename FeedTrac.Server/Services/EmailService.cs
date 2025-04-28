@@ -1,10 +1,6 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Mail;
-using System.Text;
 using FeedTrac.Server.Database;
-using FeedTrac.Server.Extensions;
-using Newtonsoft.Json;
 
 namespace FeedTrac.Server.Services;
 
@@ -13,35 +9,30 @@ namespace FeedTrac.Server.Services;
 /// </summary>
 public class EmailService
 {
-	private HttpClient _httpClient;
+	private const string SmtpServer = "smtp.gmail.com";
+	private const int SmtpPort = 587;
+	private readonly string _smtpUser;
+	private readonly string _smtpPass;
 	
-	private readonly string smtpServer = "smtp.gmail.com";
-	private readonly int smtpPort = 587;
-	private readonly string smtpUser;
-	private readonly string smtpPass;
+	/// <summary>
+	/// Constructor and Injector for Email Service
+	/// </summary>
 	public EmailService()
 	{
-		_httpClient = new HttpClient();
-		string apiKey = Environment.GetEnvironmentVariable("RESEND_KEY");
-		_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-		
-		smtpUser = Environment.GetEnvironmentVariable("GMAIL_EMAIL");
-		smtpPass = Environment.GetEnvironmentVariable("GMAIL_PASS");
+		_smtpUser = Environment.GetEnvironmentVariable("GMAIL_EMAIL")??"";
+		_smtpPass = Environment.GetEnvironmentVariable("GMAIL_PASS")??"";
 	}
 	
-	public async Task TestEmail()
-	{
-		await SendEmailAsync(
-			to: "27774557@students.lincoln.ac.uk",
-			subject: "FeedTrac Development Test",
-			htmlContent: "<p>Hello Jake! This is a <strong>FeedTrac</strong> test email 🚀</p>"
-		);
-	}
 
+	/// <summary>
+	/// Creates a welcome emailer for a just-created teacher account
+	/// </summary>
+	/// <param name="user">The new application user</param>
+	/// <param name="plainTextPass">The user's password</param>
 	public async Task TeacherWelcomeEmail(ApplicationUser user, string plainTextPass)
 	{
 		await SendEmailAsync(
-			to: user.Email,
+			to: user.Email ?? string.Empty,
 			subject: "FeedTrac Teacher Onboarding",
 			htmlContent: $"""
 			              <p>Hello {user.FirstName} {user.LastName}</p>
@@ -55,13 +46,17 @@ public class EmailService
 		);
 	}
 
+	/// <summary>
+	/// Send an email notifying teachers when a ticket is created in a module they are a teacher for
+	/// </summary>
+	/// <param name="ticket">Target ticket</param>
 	public async Task NotifyTeachersAboutTicket(FeedbackTicket ticket)
 	{
 		List<TeacherModule> teachers = ticket.Module.TeacherModule;
 		foreach (TeacherModule tm in teachers)
 		{
 			await SendEmailAsync(
-				to: tm.User.Email,
+				to: tm.User.Email ?? string.Empty,
 				subject: "FeedTrac Teacher Onboarding",
 				htmlContent: $"""
 				              <p>Hello {tm.User.FirstName} {tm.User.LastName}</p>
@@ -72,12 +67,16 @@ public class EmailService
 		}
 	}
 
+	/// <summary>
+	/// Update teachers and ticket owner when a ticket they have access to is updated
+	/// </summary>
+	/// <param name="fm"></param>
 	public async Task NotifyTicketMessage(FeedbackMessage fm)
 	{
 		List<TeacherModule> teachers = fm.Ticket.Module.TeacherModule;
 		
 		await SendEmailAsync(
-			to: fm.Ticket.Owner.Email,
+			to: fm.Ticket.Owner.Email ?? string.Empty,
 			subject: "FeedTrac Ticket Update",
 			htmlContent: $"""
 			              <p>Hello {fm.Ticket.Owner.FirstName} {fm.Ticket.Owner.LastName}</p>
@@ -91,7 +90,7 @@ public class EmailService
 		foreach (TeacherModule tm in teachers)
 		{
 			await SendEmailAsync(
-				to: tm.User.Email,
+				to: tm.User.Email ?? string.Empty,
 				subject: "FeedTrac Ticket Update",
 				htmlContent: $"""
 				              <p>Hello {tm.User.FirstName} {tm.User.LastName}</p>
@@ -104,12 +103,16 @@ public class EmailService
 		}
 	}
 
+	/// <summary>
+	/// Email teachers and ticket owner when a ticket is marked as resolved
+	/// </summary>
+	/// <param name="ticket"></param>
 	public async Task TicketResolved(FeedbackTicket ticket)
 	{
 		List<TeacherModule> teachers = ticket.Module.TeacherModule;
 		
 		await SendEmailAsync(
-			to: ticket.Owner.Email,
+			to: ticket.Owner.Email ?? string.Empty,
 			subject: "FeedTrac Ticket Update",
 			htmlContent: $"""
 			              <p>Hello {ticket.Owner.FirstName} {ticket.Owner.LastName}</p>
@@ -120,7 +123,7 @@ public class EmailService
 		foreach (TeacherModule tm in teachers)
 		{
 			await SendEmailAsync(
-				to: tm.User.Email,
+				to: tm.User.Email ?? string.Empty,
 				subject: "FeedTrac Ticket Update",
 				htmlContent: $"""
 				              <p>Hello {tm.User.FirstName} {tm.User.LastName}</p>
@@ -130,20 +133,26 @@ public class EmailService
 		}
 	}
 	
-	public async Task SendEmailAsync(string to, string subject, string htmlContent)
+	/// <summary>
+	/// Function to send an email
+	/// </summary>
+	/// <param name="to">target inbox</param>
+	/// <param name="subject">Email Subject</param>
+	/// <param name="htmlContent">HTML content of the email</param>
+	async Task SendEmailAsync(string to, string subject, string htmlContent)
 	{
-		var smtpClient = new SmtpClient(smtpServer);
-		smtpClient.Port = smtpPort;
+		var smtpClient = new SmtpClient(SmtpServer);
+		smtpClient.Port = SmtpPort;
 
-		if (string.IsNullOrWhiteSpace(smtpUser) || string.IsNullOrWhiteSpace(smtpPass))
+		if (string.IsNullOrWhiteSpace(_smtpUser) || string.IsNullOrWhiteSpace(_smtpPass))
 			return;
 		
-		smtpClient.Credentials = new NetworkCredential(smtpUser, smtpPass);
+		smtpClient.Credentials = new NetworkCredential(_smtpUser, _smtpPass);
 		smtpClient.EnableSsl = true;
 		
 		var payload = new MailMessage
 		{
-			From = new MailAddress(smtpUser, "FeedTrac Notifications"),
+			From = new MailAddress(_smtpUser, "FeedTrac Notifications"),
 			Subject = subject,
 			Body = htmlContent +  "<br/><br/>This email is part of a Team Software Engineering Assignment, if you feel like you received this email in error, please contact 27774557@students.lincoln.ac.uk",
 			IsBodyHtml = true

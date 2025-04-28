@@ -4,7 +4,6 @@
 // Last Modified By: Jake Mitchell
 
 using System.Text;
-using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
@@ -12,7 +11,6 @@ using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using Microsoft.AspNetCore.Identity.Data;
 using FeedTrac.Server.Models.Forms;
-using Microsoft.AspNetCore.Authorization;
 using FeedTrac.Server.Models.Responses.Identity;
 using FeedTrac.Server.Services;
 using OtpNet;
@@ -35,7 +33,7 @@ public class IdentityController : ControllerBase
     /// </summary>
     /// <param name="userManager"></param>
     /// <param name="signInManager"></param>
-    /// <param name="emailSender"></param>
+    /// <param name="emailService"></param>
     public IdentityController(FeedTracUserManager userManager,
                               SignInManager<ApplicationUser> signInManager,
                               EmailService emailService)
@@ -188,8 +186,8 @@ public class IdentityController : ControllerBase
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user != null && await _userManager.IsEmailConfirmedAsync(user))
         {
-            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
-            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            //var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+            //code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
             //await _emailSender.SendPasswordResetCodeAsync(user, request.Email, HtmlEncoder.Default.Encode(code));
         }
         return Ok();
@@ -237,7 +235,6 @@ public class IdentityController : ControllerBase
     [ProducesResponseType(typeof(AuthSummaryResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> IsAuthenticated()
     {
-        await _emailService.TestEmail();
         if (User.Identity != null && User.Identity.IsAuthenticated)
         {
             var user = await _userManager.RequireUser();
