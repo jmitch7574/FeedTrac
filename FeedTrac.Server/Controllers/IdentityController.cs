@@ -199,15 +199,11 @@ public class IdentityController : ControllerBase
     /// <param name="request">Reset password request containing the user's email, reset code, and new password</param>
     /// <returns></returns>
     [HttpPost("resetPassword")]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    public async Task<IActionResult> ResetPassword([FromBody] FeedTracResetPasswordRequest request)
     {
-        var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user == null)
-        {
-            return BadRequest("Could not find user.");
-        }
-        var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.ResetCode));
-        var result = await _userManager.ResetPasswordAsync(user, code, request.NewPassword);
+        var user = await _userManager.RequireUser();
+            
+        var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
         if (!result.Succeeded)
         {
             return BadRequest(result.Errors);
