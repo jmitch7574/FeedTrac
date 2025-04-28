@@ -102,7 +102,9 @@ public class IdentityController : ControllerBase
 
         // Update the user with the changes
         await _userManager.UpdateAsync(user);
-
+        
+        await _emailService.TeacherWelcomeEmail(user, request.Password);
+        
         RegisteredTeacher response = new RegisteredTeacher
         {
             TwoFactorKey = key

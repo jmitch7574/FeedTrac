@@ -39,6 +39,8 @@ public class FeedTracMiddleware
 			context.Response.ContentType = "application/json";
 			var response = new { error = ex.Message };
 			await context.Response.WriteAsJsonAsync(response);
+			Console.WriteLine(ex.Message);
+			Console.WriteLine(ex.StackTrace);
 		}
 	}
 }
