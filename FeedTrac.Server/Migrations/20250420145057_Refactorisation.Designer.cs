@@ -3,6 +3,7 @@ using System;
 using FeedTrac.Server.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FeedTrac.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250420145057_Refactorisation")]
+    partial class Refactorisation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -213,7 +216,28 @@ namespace FeedTrac.Server.Migrations
                     b.Property<int>("ModuleId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Role")
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ModuleId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("StudentModules", "feedtrac");
+                });
+
+            modelBuilder.Entity("FeedTrac.Server.Database.TeacherModule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ModuleId")
                         .HasColumnType("integer");
 
                     b.Property<string>("UserId")
@@ -226,7 +250,7 @@ namespace FeedTrac.Server.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserModules", "feedtrac");
+                    b.ToTable("TeacherModules", "feedtrac");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -399,7 +423,37 @@ namespace FeedTrac.Server.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("FeedTrac.Server.Database.UserModule", b =>
+            modelBuilder.Entity("FeedTrac.Server.Database.MessageImage", b =>
+                {
+                    b.HasOne("FeedTrac.Server.Database.FeedbackMessage", "Message")
+                        .WithMany("Images")
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+                });
+
+            modelBuilder.Entity("FeedTrac.Server.Database.StudentModule", b =>
+                {
+                    b.HasOne("FeedTrac.Server.Database.Module", "Module")
+                        .WithMany("StudentModule")
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FeedTrac.Server.Database.ApplicationUser", "User")
+                        .WithMany("EnrolledModules")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Module");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("FeedTrac.Server.Database.TeacherModule", b =>
                 {
                     b.HasOne("FeedTrac.Server.Database.Module", "Module")
                         .WithMany("TeacherModule")
@@ -476,8 +530,16 @@ namespace FeedTrac.Server.Migrations
                     b.Navigation("TeachingModules");
 
                     b.Navigation("Tickets");
+                });
 
-                    b.Navigation("UserModules");
+            modelBuilder.Entity("FeedTrac.Server.Database.FeedbackMessage", b =>
+                {
+                    b.Navigation("Images");
+                });
+
+            modelBuilder.Entity("FeedTrac.Server.Database.FeedbackTicket", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("FeedTrac.Server.Database.Module", b =>

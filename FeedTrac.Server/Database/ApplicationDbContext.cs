@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
 
 namespace FeedTrac.Server.Database
 {
@@ -15,20 +14,20 @@ namespace FeedTrac.Server.Database
         public DbSet<Module> Modules { get; set; }
 
         /// <summary>
-        /// The student-to-modules table
+        /// The user-to-modules table
         /// </summary>
-        public DbSet<StudentModule> StudentModules { get; set; }
-
-        public DbSet<StudentModule> TeacherModules { get; set; }
+        public DbSet<UserModule> UserModules { get; set; }
 
         /// <summary>
         /// The feedback tickets table
         /// </summary>
         public DbSet<FeedbackTicket> FeedbackTicket { get; set; }
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-        {
-            
-        }
+        
+        /// <summary>
+        /// DBContext Constructor
+        /// </summary>
+        /// <param name="options"></param>
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
         /// <summary>
         /// Configures the database schema
@@ -91,7 +90,18 @@ namespace FeedTrac.Server.Database
                 .WithMany(m => m.Tickets) // Assuming a collection exists in Module
                 .HasForeignKey(um => um.ModuleId)
                 .OnDelete(DeleteBehavior.Cascade);
-        }
 
+            builder.Entity<FeedbackMessage>()
+                .HasOne(fm => fm.Ticket)
+                .WithMany(ft => ft.Messages)
+                .HasForeignKey(fm => fm.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<MessageImage>()
+                .HasOne(im => im.Message)
+                .WithMany(fm => fm.Images)
+                .HasForeignKey(im => im.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
     }
 }

@@ -1,4 +1,3 @@
-
 using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using FeedTrac.Server.Services;
@@ -12,80 +11,9 @@ using System.Runtime.ConstrainedExecution;
 
 namespace FeedTrac.Server
 {
-    /// <summary>
-    /// The entry class of the project
-    /// </summary>
     public class Program
     {
-        /// <summary>
-        /// Create our custom roles
-        /// </summary>
-        /// <param name="serviceProvider">Service provider made in main</param>
-        /// <returns></returns>
-        async static Task CreateRolesAsync(IServiceProvider serviceProvider)
-        {
-            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-            string[] roleNames = { "Teacher", "Admin", "Student" };
-            foreach (var roleName in roleNames)
-            {
-                bool roleExists = await roleManager.RoleExistsAsync(roleName);
-                if (!roleExists)
-                {
-                    await roleManager.CreateAsync(new IdentityRole(roleName));
-                }
-            }
-        }
-
-
-        async static Task CreateDefaultAdministrator(IServiceProvider serviceProvider)
-        {
-            var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-            var admin = await userManager.FindByEmailAsync("feedtrac-admin@lincoln.ac.uk");
-            if (admin != null)
-            {
-                return;
-            }
-
-            admin = new ApplicationUser
-            {
-                UserName = "feedtrac-admin@lincoln.ac.uk",
-                FirstName = "Admin",
-                LastName = "Admin",
-                Email = "feedtrac-admin@lincoln.ac.uk"
-            };
-
-
-
-            // Generate and manually set the key (e.g., store in DB)
-            var key = "VMNAYBBTP4PHHMNF53O2W5UGRJDD442G";
-
-            var result = await userManager.CreateAsync(admin, "Password123!");
-            if (!result.Succeeded)
-            {
-                foreach (var error in result.Errors)
-                {
-                    Console.WriteLine(error.Description);
-                }
-                return;
-            }
-
-
-            await userManager.AddToRoleAsync(admin, "Admin");
-            admin.TwoFactorSecret = key;
-
-
-            await userManager.UpdateAsync(admin);
-        }
-
-        /// <summary>
-        /// Entry point of the program
-        /// </summary>
-        /// <param name="args">Command line arguments</param>
-        /// <returns></returns>
-        public static async Task Main(string[] args)
+        public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -134,23 +62,15 @@ namespace FeedTrac.Server
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddApiEndpoints();
 
-            builder.Services.AddScoped<UserService>();
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ModuleService>();
             builder.Services.AddScoped<FeedbackService>();
             builder.Services.AddScoped<UserManager<ApplicationUser>, FeedTracUserManager>();
-
-            builder.Services.Configure<IdentityOptions>(options =>
-            {
-                options.SignIn.RequireConfirmedEmail = false; // Optional
-                options.SignIn.RequireConfirmedPhoneNumber = false; // Optional
-                options.Tokens.AuthenticatorTokenProvider = default; // Remove 2FA providers
-            });
 
             var app = builder.Build();
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
-            app.UseCors("AllowFrontend");
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -163,7 +83,7 @@ namespace FeedTrac.Server
 
             app.UseHttpsRedirection();
             app.MapControllers();
-            app.UseAuthentication();
+
             app.UseAuthorization();
 
             app.MapFallbackToFile("/index.html");
