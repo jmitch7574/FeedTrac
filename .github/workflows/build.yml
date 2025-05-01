@@ -16,7 +16,7 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0'
-
+        
     - name: Restore Server
       working-directory: FeedTrac.Server
       run: dotnet restore
