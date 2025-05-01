@@ -1,4 +1,5 @@
 ﻿using FeedTrac.Server.Database;
+using FeedTrac.Server.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace FeedTrac.Server.Services;
@@ -42,73 +43,40 @@ public class ModuleService
                      m.TeacherModule.FirstOrDefault(tm => tm.User == user) != null
             ).ToListAsync();
 
-        return await _context.Modules.Where(m => m.UserModules.Any(u => u.User.Id == userId)).ToListAsync();
+        return modules;
     }
 
+    /// <summary>
+    /// Gets all modules
+    /// </summary>
+    /// <returns></returns>
+    public async Task<List<Module>> GetAllModulesAsync()
+    {
+        await _userManager.RequireUser("Admin");
+        
+        // Get all applicable modules
+        List<Module> modules = await _context.Modules.ToListAsync();
+
+        return modules;
+    }
+
+/*
+    /// <summary>
+    /// Gets module by specific ID
+    /// </summary>
+    /// <param name="id">ID of the module to get</param>
+    /// <returns></returns>
+    /// <exception cref="Exception">Module cannot be found</exception>
     public async Task<Module> GetModuleAsync(int id)
     {
-        var module = await _context.Modules.Where(m => m.Id == id).Include(m => m.UserModules).FirstOrDefaultAsync();
+        var module = await _context.Modules.Where(m => m.Id == id)
+            .Include(m => m.StudentModule)
+            .FirstOrDefaultAsync();
+
         if (module == null)
             throw new Exception("Module not found.");
 
         return module;
     }
-
-    public async Task<Module> JoinModule(string joinCode)
-    {
-        var userId = _userService.GetCurrentUserId();
-        var module = await _context.Modules.Where(m => m.JoinCode == joinCode).FirstOrDefaultAsync();
-        if (module == null)
-            throw new Exception("Module not found.");
-
-        module.UserModules.Add(new UserModule
-        {
-            UserId = userId,
-            Role = 2
-        });
-        await _context.SaveChangesAsync();
-        return module;
-    }
-
-    public async Task<Module> RenameModule(int moduleId, string newName)
-    {
-        return new Module();
-    }
-
-    public async Task<Module> CreateModuleAsync(string ModuleName)
-    {
-        Module newModule = new Module
-        {
-            Name = ModuleName,
-            JoinCode = Guid.NewGuid().ToString().Substring(0, 6)
-        };
-        newModule.UserModules.Add(new UserModule
-        {
-            UserId = _userService.GetCurrentUserId(),
-            Role = 0
-        });
-        _context.Modules.Add(newModule);
-        await _context.SaveChangesAsync();
-        return newModule;
-    }
-
-    public async Task DeleteModuleAsync(int moduleId)
-    {
-        Module targetModule = await GetModuleAsync(moduleId);
-
-        UserModule moduleOwner = targetModule.UserModules.FirstOrDefault(u => u.Role == 0);
-
-        if (moduleOwner == null)
-            throw new Exception("Could not get Module Owner, somehow"); // This should never happen in prod lol
-
-        string? idOfOwner = moduleOwner.UserId;
-
-        // Check user is owner of module
-        if (_userService.GetCurrentUserId() != targetModule.UserModules.FirstOrDefault(u => u.Role == 0).UserId)
-            throw new Exception("User is not owner of module");
-
-        _context.Modules.Remove(targetModule);
-        await _context.SaveChangesAsync();
-        return;
-    }
+*/
 }

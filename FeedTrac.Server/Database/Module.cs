@@ -40,7 +40,7 @@ public class Module
     /// The Many-to-Many relationships between Teachers and this module
     /// </summary>
     [JsonIgnore]
-    public List<UserModule> UserModules { get; set; } = new();
+    public List<TeacherModule> TeacherModule { get; init; } = new();
 
     /// <summary>
     /// The list of tickets this module has

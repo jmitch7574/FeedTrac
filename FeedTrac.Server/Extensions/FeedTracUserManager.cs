@@ -10,6 +10,24 @@ namespace FeedTrac.Server.Extensions;
 /// </summary>
 public class FeedTracUserManager : UserManager<ApplicationUser>
 {
+    /// <summary>
+    /// HTTP context used to get user claim
+    /// </summary>
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="store"></param>
+    /// <param name="optionsAccessor"></param>
+    /// <param name="passwordHasher"></param>
+    /// <param name="userValidators"></param>
+    /// <param name="passwordValidators"></param>
+    /// <param name="keyNormalizer"></param>
+    /// <param name="errors"></param>
+    /// <param name="services"></param>
+    /// <param name="logger"></param>
+    /// <param name="httpContextAccessor"></param>
     public FeedTracUserManager(
         IUserStore<ApplicationUser> store,
         IOptions<IdentityOptions> optionsAccessor,
@@ -23,8 +41,15 @@ public class FeedTracUserManager : UserManager<ApplicationUser>
         IHttpContextAccessor httpContextAccessor)
         : base(store, optionsAccessor, passwordHasher, userValidators, passwordValidators, keyNormalizer, errors, services, logger)
     {
+        _httpContextAccessor = httpContextAccessor;
     }
 
+    /// <summary>
+    /// An override function for creating a user, allows us to add our email extention validation rules
+    /// </summary>
+    /// <param name="user">The <see cref="ApplicationUser"/></param>
+    /// <param name="password">The user's password</param>
+    /// <returns></returns>
     public override async Task<IdentityResult> CreateAsync(ApplicationUser user, string password)
     {
         if (user.Email == null)

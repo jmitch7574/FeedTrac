@@ -11,114 +11,274 @@ using Microsoft.AspNetCore.WebUtilities;
 using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using Microsoft.AspNetCore.Identity.Data;
+using FeedTrac.Server.Models.Forms;
+using FeedTrac.Server.Models.Responses.Identity;
+using FeedTrac.Server.Services;
+using OtpNet;
 
-namespace FeedTrac.Controllers
+namespace FeedTrac.Server.Controllers;
+
+/// <summary>
+/// A set of endpoints for managing user sign-ins and sign-ups
+/// </summary>
+[ApiController]
+[Route("identity")]
+public class IdentityController : ControllerBase
 {
+    private readonly FeedTracUserManager _userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly EmailService _emailService;
+
     /// <summary>
-    /// A set of endpoints for managing user sign-ins and sign-ups
+    /// 
     /// </summary>
-    [ApiController]
-    [Route("identity")]
-    public class IdentityController : ControllerBase
+    /// <param name="userManager"></param>
+    /// <param name="signInManager"></param>
+    /// <param name="emailService"></param>
+    public IdentityController(FeedTracUserManager userManager,
+                              SignInManager<ApplicationUser> signInManager,
+                              EmailService emailService)
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly IEmailSender<ApplicationUser> _emailSender;
-        private readonly IOptionsMonitor<BearerTokenOptions> _bearerTokenOptions;
+        _userManager = userManager;
+        _signInManager = signInManager;
+        _emailService = emailService;
+    }
 
-        public IdentityController(UserManager<ApplicationUser> userManager,
-                                  SignInManager<ApplicationUser> signInManager,
-                                  IEmailSender<ApplicationUser> emailSender,
-                                  IOptionsMonitor<BearerTokenOptions> bearerTokenOptions)
+    /// <summary>
+    /// API Endpoint for registring a student
+    /// </summary>
+    /// <param name="request">Body request containing the Registration information <see cref="RegisterUserRequest"/></param>
+    /// <response code="200">User is successfully registered</response>
+    /// <response code="400">User could not be created with the credentials supplied</response>
+    [HttpPost("student/register")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RegisterStudent([FromBody] RegisterUserRequest request)
+    {
+        var user = new ApplicationUser { UserName = request.Email, Email = request.Email, FirstName = request.FirstName, LastName = request.LastName };
+        var result = await _userManager.CreateAsync(user, request.Password);
+
+        if (!result.Succeeded)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _emailSender = emailSender;
-            _bearerTokenOptions = bearerTokenOptions;
+            return BadRequest(result.Errors);
+        }
+        
+        await _userManager.AddToRoleAsync(user, "Student");
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Endpoint for registering a teacher
+    /// </summary>
+    /// <param name="request">Body request containing the Registration information <see cref="RegisterUserRequest"/></param>
+    /// <response code="200">User created successfully</response>
+    /// <response code="400">User could not be created with the credentials supplied</response>
+    [HttpPost("teacher/register")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RegisterTeacher([FromBody] RegisterUserRequest request)
+    {
+        await _userManager.RequireUser("Admin");
+        var user = new ApplicationUser { UserName = request.Email, Email = request.Email, FirstName = request.FirstName, LastName = request.LastName };
+        var result = await _userManager.CreateAsync(user, request.Password);
+
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Errors);
         }
 
-        /// <summary>
-        /// API Endpoint for registring a student
-        /// </summary>
-        /// <param name="request">The request body supplied, includes email, password, firstname and lastname</param>
-        /// <returns>
-        ///     <b>200:</b> Tje User Successfully registered<br/>
-        ///     <b>400:</b> Failed to register user <br/>
-        [HttpPost("student/register")]
-        public async Task<IActionResult> Register([FromBody] FeedTracRegisterRequest request)
+        // Enable two-factor authentication
+        user.TwoFactorEnabled = true;
+
+        byte[] secretKey = KeyGeneration.GenerateRandomKey(20); // 20 bytes (160 bits)
+        string key = Base32Encoding.ToString(secretKey);
+
+        user.TwoFactorSecret = key;
+
+        // Add user to the Teacher role (was incorrectly adding to Student role)
+        await _userManager.AddToRoleAsync(user, "Teacher");
+
+        // Update the user with the changes
+        await _userManager.UpdateAsync(user);
+        
+        await _emailService.TeacherWelcomeEmail(user, request.Password);
+        
+        RegisteredTeacher response = new RegisteredTeacher
         {
-            var user = new ApplicationUser { UserName = request.Email, Email = request.Email, FirstName = request.FirstName, LastName = request.LastName };
-            var result = await _userManager.CreateAsync(user, request.Password);
+            TwoFactorKey = key
+        };
+        return Ok(response);
+    }
 
-            if (!result.Succeeded)
-            {
-                return BadRequest(result.Errors);
-            }
+    /// <summary>
+    /// API Endpoint for logging in a student
+    /// </summary>
+    /// <param name="login"></param>
+    /// <response code="200">Login was successful</response>
+    /// <response code="400">User could not login with provided credentials</response>
+    [HttpPost("student/login")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> StudentLogin([FromBody] StudentLoginRequest login)
+    {
 
-            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var user = await _userManager.FindByEmailAsync(login.Email);
+        if (user == null) return Unauthorized("Invalid credentials");
+
+        // Check user role before allowing login
+        var roles = await _userManager.GetRolesAsync(user);
+        if (!roles.Contains("Student")) // Change condition as needed
+        {
+            return BadRequest("This endpoint is for student accounts only");
+        }
+
+        var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
+        if (!result.Succeeded) return Unauthorized("Invalid credentials");
+
+        await _signInManager.SignInAsync(user, isPersistent: login.RememberMe);
+        return Ok();
+    }
+
+    /// <summary>
+    /// API Endpoint for logging in a teacher
+    /// </summary>
+    /// <param name="login"></param>
+    /// <response code="200">Login successful</response>
+    /// <response code="400">User could not be logged in with provided credentials</response>
+    [HttpPost("teacher/login")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> TeacherLogin([FromBody] TeacherLoginRequest login)
+    {
+        var user = await _userManager.FindByEmailAsync(login.Email);
+        if (user == null) return Unauthorized("User not found");
+
+        // Check user role before allowing login
+        var roles = await _userManager.GetRolesAsync(user);
+        if (!roles.Contains("Teacher") && !roles.Contains("Admin")) // Change condition as needed
+        {
+            return BadRequest("Not a teacher account");
+        }
+
+
+        var isValid = user.Confirm2FaToken(login.TwoFactorCode);
+
+        if (!isValid)
+        {
+            return Unauthorized("Invalid two-factor code");
+        }
+
+
+        var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
+        if (!result.Succeeded) return Unauthorized("Invalid credentials");
+
+        await _signInManager.SignInAsync(user, isPersistent: login.RememberMe);
+        return Ok();
+    }
+
+    /// <summary>
+    /// Endpoint for initiation a forgotten password reset
+    /// </summary>
+    /// <param name="request">Forgot password request containing the users email</param>
+    /// <response code="200">Successful sent forgot password email</response>
+    /// <response code="404">Account with email not found</response>
+    [HttpPost("forgotPassword/request")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if (user != null)
+        {
+            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-            await _emailSender.SendConfirmationLinkAsync(user, user.Email, HtmlEncoder.Default.Encode(code));
-
+            await _emailService.ForgotPassword(request.Email, HtmlEncoder.Default.Encode(code));
             return Ok();
         }
 
-        /// <summary>
-        /// API Endpoint for logging in a student
-        /// </summary>
-        /// <param name="login"></param>
-        /// <returns></returns>
-        [HttpPost("student/login")]
-        public async Task<IActionResult> Login([FromBody] FeedTracLoginRequest login)
+        throw new ResourceNotFoundException();
+    }
+
+    /// <summary>
+    /// Endpoint for resetting password using a code generated by <see cref="ForgotPassword"/>
+    /// </summary>
+    /// <param name="request">Forgot Password followup containing the user's email, reset code and new password</param>
+    /// <response code="200">Successfully updated password</response>
+    /// <response code="400">Could not complete request</response>
+    [HttpPost("forgotPassword/followup")]
+    public async Task<IActionResult> ForgotPasswordFollowUp([FromBody] ResetPasswordRequest request)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if (user == null)
         {
-            var result = await _signInManager.PasswordSignInAsync(login.Email, login.Password, false, lockoutOnFailure: true);
-            if (!result.Succeeded)
-            {
-                return Unauthorized();
-            }
-            return Ok();
+            return BadRequest("Could not find user.");
         }
-
-        [HttpPost("refresh")]
-        public async Task<IActionResult> Refresh([FromBody] RefreshRequest refreshRequest)
+        var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.ResetCode));
+        var result = await _userManager.ResetPasswordAsync(user, code, request.NewPassword);
+        if (!result.Succeeded)
         {
-            var refreshTokenProtector = _bearerTokenOptions.Get(IdentityConstants.BearerScheme).RefreshTokenProtector;
-            var refreshTicket = refreshTokenProtector.Unprotect(refreshRequest.RefreshToken);
-
-            if (refreshTicket == null)
-            {
-                return Unauthorized();
-            }
-            return Ok();
+            return BadRequest(result.Errors);
         }
+        return Ok();
+    }
 
-        [HttpPost("forgotPassword")]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    /// <summary>
+    /// Endpoint for resetting the user's password
+    /// </summary>
+    /// <param name="request">Reset password request containing the user's email, reset code, and new password</param>
+    /// <response code="200">Successful reset password</response>
+    /// <response code="400">Invalid Credentials</response>
+    [HttpPost("resetPassword")]
+    public async Task<IActionResult> ResetPassword([FromBody] FeedTracResetPasswordRequest request)
+    {
+        var user = await _userManager.RequireUser();
+            
+        var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        if (!result.Succeeded)
         {
-            var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user != null && await _userManager.IsEmailConfirmedAsync(user))
+            return BadRequest(result.Errors);
+        }
+        return Ok();
+    }
+
+    /// <summary>
+    /// Logout endpoint
+    /// </summary>
+    /// <response code="200">Logout successful</response>
+    [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Logout()
+    {
+        await _signInManager.SignOutAsync();
+        return Ok("Logged out successfully");
+    }
+
+    /// <summary>
+    /// Authentication Endpoint
+    /// </summary>
+    /// <response code="200">Returns auth info</response>
+    [HttpGet]
+    [ProducesResponseType(typeof(AuthSummaryResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> IsAuthenticated()
+    {
+        if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            var user = await _userManager.RequireUser();
+            
+            AuthSummaryResponse.AuthStatus status = AuthSummaryResponse.AuthStatus.AuthenticatedStudent;
+            if (User.IsInRole("Teacher"))
             {
-                var code = await _userManager.GeneratePasswordResetTokenAsync(user);
-                code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                await _emailSender.SendPasswordResetCodeAsync(user, request.Email, HtmlEncoder.Default.Encode(code));
+                status = AuthSummaryResponse.AuthStatus.AuthenticatedTeacher;
             }
-            return Ok();
+            else if (User.IsInRole("Admin"))
+            {
+                status = AuthSummaryResponse.AuthStatus.AuthenticatedAdmin;
+            }
+
+            return Ok(new AuthSummaryResponse() { Status = status, UserInfo = new (user) });
         }
 
-        [HttpPost("resetPassword")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
-        {
-            var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null)
-            {
-                return BadRequest("Invalid user.");
-            }
-            var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.ResetCode));
-            var result = await _userManager.ResetPasswordAsync(user, code, request.NewPassword);
-            if (!result.Succeeded)
-            {
-                return BadRequest(result.Errors);
-            }
-            return Ok();
-        }
+        return Ok(new AuthSummaryResponse() { Status = AuthSummaryResponse.AuthStatus.NotAuthenticated});
+
     }
 }
+
