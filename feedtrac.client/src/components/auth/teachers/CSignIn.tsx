@@ -10,20 +10,21 @@ import { loginTeacher } from "@/hooks/useAuth";
 import { useNavigate } from "react-router";
 
 export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
-  const [Email, setEmail] = useState("umarnauman@lincoln.ac.uk");
-  const [Password, setPassword] = useState("Test1234!");
+  const [Email, setEmail] = useState("feedtrac-admin@lincoln.ac.uk");
+  const [Password, setPassword] = useState("Password123!");
+  const [twoFactorCode, setTwoFactorCode] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    console.log("Sign in form submitted successfully");
+    // console.log("Sign in form submitted successfully");
 
     const payload: teacherLoginType = {
       Email,
       Password,
       rememberMe: true,
-      twoFactorCode: "",
+      twoFactorCode,
     };
 
     try {
@@ -57,6 +58,10 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
                   </a>
                 </div>
                 <Input id='password' type='password' placeholder='Enter your password' required value={Password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
+              <div className='grid gap-3'>
+                <Label htmlFor='twoFactorCode'>Code</Label>
+                <Input id='twoFactorCode' type='number' placeholder='000000' required value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} />
               </div>
               <div className='flex flex-col gap-3'>
                 <Button type='submit' className='w-full'>
