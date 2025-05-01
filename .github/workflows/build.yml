@@ -1,0 +1,38 @@
+name: Build & Test FeedTrac
+
+on:
+  pull_request:
+    branches: [ main ]  # Or your default branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'  # Change to your version
+
+    - name: Restore Server
+      working-directory: FeedTrac.Server
+      run: dotnet restore
+
+    - name: Build Server
+      working-directory: FeedTrac.Server
+      run: dotnet build --no-restore --configuration Release
+
+    - name: Restore Tests
+      working-directory: FeedTrac.Tests
+      run: dotnet restore
+
+    - name: Build Tests
+      working-directory: FeedTrac.Tests
+      run: dotnet build --no-restore --configuration Release
+
+    - name: Run Tests
+      working-directory: FeedTrac.Tests
+      run: dotnet test --no-build --configuration Release
