@@ -26,13 +26,16 @@ jobs:
       run: dotnet build --no-restore --configuration Release
 
     - name: Restore Tests
+      if: exists('FeedTrac.Tests')
       working-directory: FeedTrac.Tests
       run: dotnet restore
 
     - name: Build Tests
+      if: exists('FeedTrac.Tests')
       working-directory: FeedTrac.Tests
       run: dotnet build --no-restore --configuration Release
 
     - name: Run Tests
+      if: exists('FeedTrac.Tests')
       working-directory: FeedTrac.Tests
       run: dotnet test --no-build --configuration Release
