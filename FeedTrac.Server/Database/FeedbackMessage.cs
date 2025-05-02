@@ -25,7 +25,7 @@ namespace FeedTrac.Server.Database
         /// <summary>
         /// Referenced Images for the message
         /// </summary>
-        public List<MessageImage> Images { get; set; }
+        public List<MessageImage> Images { get; set; } = new();
 
         /// <summary>
         /// The ID of the ticket this message belongs to
@@ -43,11 +43,15 @@ namespace FeedTrac.Server.Database
         /// <summary>
         /// Id of the author
         /// </summary>
+        
+        [Column(TypeName ="text")]
+        [Required]
         public required string AuthorId { get; set; }
         /// <summary>
         /// The author of the message
         /// </summary>
         [Required]
+        [ForeignKey(nameof(AuthorId))]
         public required ApplicationUser Author { get; set; }
 
         /// <summary>

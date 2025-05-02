@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
 
 namespace FeedTrac.Server.Database
 {
@@ -15,26 +14,40 @@ namespace FeedTrac.Server.Database
         public DbSet<Module> Modules { get; set; }
 
         /// <summary>
-        /// The student-to-modules table
+        /// Many to Many collection that links Modules and Students
         /// </summary>
         public DbSet<StudentModule> StudentModules { get; set; }
 
+        /// <summary>
+        /// Many to Many collection that links Modules and Teachers
+        /// </summary>
         public DbSet<TeacherModule> TeacherModules { get; set; }
 
+        /// <summary>
+        /// Tickets Table
+        /// </summary>
         public DbSet<FeedbackTicket> Tickets { get; set; }
 
+        /// <summary>
+        /// Messages Table
+        /// </summary>
         public DbSet<FeedbackMessage> Messages { get; set; }
 
+        /// <summary>
+        /// Images table
+        /// </summary>
         public DbSet<MessageImage> Images { get; set; }
 
         /// <summary>
         /// The feedback tickets table
         /// </summary>
         public DbSet<FeedbackTicket> FeedbackTicket { get; set; }
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-        {
-            
-        }
+        
+        /// <summary>
+        /// DBContext Constructor
+        /// </summary>
+        /// <param name="options"></param>
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
         /// <summary>
         /// Configures the database schema
@@ -99,15 +112,15 @@ namespace FeedTrac.Server.Database
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<FeedbackMessage>()
-                .HasOne(FeedbackMessage => FeedbackMessage.Ticket)
-                .WithMany(FeedbackTicket => FeedbackTicket.Messages)
-                .HasForeignKey(FeedbackMessage => FeedbackMessage.TicketId)
+                .HasOne(fm => fm.Ticket)
+                .WithMany(ft => ft.Messages)
+                .HasForeignKey(fm => fm.TicketId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<MessageImage>()
-                .HasOne(MessageImages => MessageImages.Message)
-                .WithMany(FeedbackMessage => FeedbackMessage.Images)
-                .HasForeignKey(MessageImages => MessageImages.MessageId)
+                .HasOne(im => im.Message)
+                .WithMany(fm => fm.Images)
+                .HasForeignKey(im => im.MessageId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

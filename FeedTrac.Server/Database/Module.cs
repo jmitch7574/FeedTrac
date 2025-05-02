@@ -31,13 +31,16 @@ public class Module
     public virtual string Name { get; set; } = null!;
 
     /// <summary>
-    /// Reference to UserModules relationship
+    /// The Many-to-Many relationships between Students and this module
     /// </summary>
     [JsonIgnore]
-    public List<StudentModule> StudentModule { get; set; } = new();
+    public List<StudentModule> StudentModule { get; init; } = new();
 
+    /// <summary>
+    /// The Many-to-Many relationships between Teachers and this module
+    /// </summary>
     [JsonIgnore]
-    public List<TeacherModule> TeacherModule { get; set; } = new();
+    public List<TeacherModule> TeacherModule { get; init; } = new();
 
     /// <summary>
     /// The list of tickets this module has
