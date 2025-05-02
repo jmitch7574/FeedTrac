@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/apiClient";
-import { Module, moduleName, ModuleResponse, teacherModuleEmail, teacherModuleId } from "@/types/Index";
+import { Module, moduleName, ModuleResponse } from "@/types/Index";
 import axios from "axios";
 
 // modules related endpoints
@@ -48,36 +48,6 @@ export const joinModule = async (data: Module): Promise<ModuleResponse> => {
   }
 };
 
-export const assignTeacherToModuleById = async (moduleId: string, data: teacherModuleId): Promise<ModuleResponse> => {
-  // -- assign teacher to module
-  try {
-    const response = await apiClient.post(`/${moduleId}/assignTeacher/byTeacherId`, data);
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      console.error("Error response:", error.response.data);
-    } else {
-      console.error("Error:", error);
-    }
-    throw error;
-  }
-};
-
-export const assignTeacherToModuleByEmail = async (moduleId: string, data: teacherModuleEmail): Promise<ModuleResponse> => {
-  // -- assign teacher to module by email
-  try {
-    const response = await apiClient.post(`/${moduleId}/assignTeacher/byTeacherEmail`, data);
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      console.error("Error response:", error.response.data);
-    } else {
-      console.error("Error:", error);
-    }
-    throw error;
-  }
-};
-
 export const getModuleInfo = async (id: number): Promise<ModuleResponse> => {
   // -- get Module Infomation by id
   try {
@@ -93,11 +63,24 @@ export const getModuleInfo = async (id: number): Promise<ModuleResponse> => {
   }
 };
 
-export const deleteModule = async (id: number): Promise<ModuleResponse> => {
+export const deleteModule = async (id: number): Promise<void> => {
   // -- delete Module by id
   try {
-    const response = await apiClient.delete(`/modules/${id}`);
-    return response.data;
+    await apiClient.delete(`/modules/${id}`);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error("Error response:", error.response.data);
+    } else {
+      console.error("Error:", error);
+    }
+    throw error;
+  }
+};
+
+export const studentLeaveModule = async (id: number): Promise<void> => {
+  // -- student leave module by id
+  try {
+    await apiClient.delete(`/modules/${id}/leave`);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       console.error("Error response:", error.response.data);

@@ -43,6 +43,16 @@ export type AuthResponse = {
   };
 };
 
+export type IdentityResponse = {
+  status: string;
+  userInfo: {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+};
+
 // modules related types
 export type Module = {
   id: number;
@@ -101,3 +111,38 @@ export type RefreshRequest = {
 export type RefreshResponse = {
   token: string;
 };
+
+// ticket related types
+
+export interface TicketMessage {
+  id: number;
+  senderId: string;
+  senderName: string;
+  content: string;
+  createdAt: string;
+  imageIds: number[];
+}
+
+export interface Ticket {
+  id: number;
+  title: string;
+  messages: TicketMessage[];
+  createdAt: string;
+  updatedAt: string;
+  status: number;
+}
+
+export interface TicketResponse {
+  tickets: Ticket[];
+}
+
+export interface CreateTicketFormData {
+  title: string;
+  content: string;
+  images?: File[];
+}
+
+export interface AddMessageFormData {
+  content: string;
+  images?: File[];
+}
