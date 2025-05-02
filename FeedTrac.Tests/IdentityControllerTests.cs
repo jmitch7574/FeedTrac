@@ -2,7 +2,7 @@
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using FeedTrac.Controllers;
+using FeedTrac.Server.Controllers;
 using Microsoft.AspNetCore.Identity;
 using FeedTrac.Server.Database;    //for ApplicationUser
 using Microsoft.AspNetCore.Identity.Data; //for RegisterUserRequest
