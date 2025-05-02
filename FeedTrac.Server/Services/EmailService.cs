@@ -30,7 +30,7 @@ public class EmailService
 	/// </summary>
 	/// <param name="user">The new application user</param>
 	/// <param name="plainTextPass">The user's password</param>
-	public async Task TeacherWelcomeEmail(ApplicationUser user, string plainTextPass)
+	public virtual async Task TeacherWelcomeEmail(ApplicationUser user, string plainTextPass) //updated to virtual for override during testing
 	{
 		await SendEmailAsync(
 			to: user.Email ?? string.Empty,

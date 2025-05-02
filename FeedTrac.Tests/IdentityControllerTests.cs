@@ -2,6 +2,7 @@
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using FeedTrac.Server;
 using FeedTrac.Server.Controllers;
 using FeedTrac.Server.Extensions;
 using FeedTrac.Server.Services;
@@ -253,6 +254,7 @@ public class IdentityControllerTests
             LastName = request.LastName
         };
 
+        _userManagerMock.Setup(x => x.RequireUser("Admin")).ReturnsAsync(new ApplicationUser());
         _userManagerMock.Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
             .Callback<ApplicationUser, string>((user, pwd) => {
                 //set this on the user to simulate side effect of creation
@@ -266,6 +268,9 @@ public class IdentityControllerTests
         _userManagerMock.Setup(x => x.UpdateAsync(It.IsAny<ApplicationUser>()))
             .ReturnsAsync(IdentityResult.Success);
 
+        _emailServiceMock.Setup(x => x.TeacherWelcomeEmail(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
+            .Returns(Task.CompletedTask);
+
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
@@ -275,13 +280,11 @@ public class IdentityControllerTests
 
         Assert.IsInstanceOfType(result, typeof(OkObjectResult));
 
-        var okResult = result as OkObjectResult;
-        Assert.IsNotNull(okResult?.Value);
+        var ok = result as OkObjectResult;
+        var response = ok!.Value as RegisteredTeacher;
 
-        //validate that the response contains a 2FA key
-        var response = okResult.Value as RegisteredTeacher;
         Assert.IsNotNull(response);
-        Assert.IsFalse(string.IsNullOrWhiteSpace(response!.TwoFactorKey));
+        Assert.IsFalse(string.IsNullOrWhiteSpace(response.TwoFactorKey));
     }
     [TestMethod]
     public async Task RegisterTeacher_ReturnsBadRequest_WhenPasswordIsInvalid()
@@ -295,6 +298,7 @@ public class IdentityControllerTests
             LastName = "Teacher"
         };
 
+        _userManagerMock.Setup(x => x.RequireUser("Admin")).ReturnsAsync(new ApplicationUser());
         //UserManager.CreateAsync returns a failure due to password
         _userManagerMock.Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
             .ReturnsAsync(IdentityResult.Failed(new IdentityError
@@ -347,7 +351,7 @@ public class IdentityControllerTests
 
         var unauthorized = result as UnauthorizedObjectResult;
         Assert.IsNotNull(unauthorized);
-        Assert.AreEqual("User not found", unauthorized.Value);
+        Assert.AreEqual("Invalid credentials", unauthorized.Value);
     }
     [TestMethod]
     public async Task StudentLogin_ReturnsForbid_WhenUserIsNotStudent()
@@ -382,8 +386,9 @@ public class IdentityControllerTests
 
         var result = await controller.StudentLogin(loginRequest);
 
-        // Assert: ForbidResult with custom message
-        Assert.IsInstanceOfType(result, typeof(ForbidResult));
+        Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
+        var badRequest = result as BadRequestObjectResult;
+        Assert.AreEqual("This endpoint is for student accounts only", badRequest?.Value);
     }
     [TestMethod]
     public async Task TeacherLogin_ReturnsUnauthorized_WhenUserIsNotTeacherOrAdmin()
@@ -427,11 +432,9 @@ public class IdentityControllerTests
 
         var result = await controller.TeacherLogin(loginRequest);
 
-        Assert.IsInstanceOfType(result, typeof(UnauthorizedObjectResult));
-
-        var unauthorized = result as UnauthorizedObjectResult;
-        Assert.IsNotNull(unauthorized);
-        Assert.AreEqual("Not a teacher account", unauthorized.Value);
+        Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
+        var badRequest = result as BadRequestObjectResult;
+        Assert.AreEqual("Not a teacher account", badRequest?.Value);
     }
     [TestMethod]
     public async Task ForgotPassword_ReturnsOk_WhenUserExistsAndEmailConfirmed()
@@ -456,11 +459,6 @@ public class IdentityControllerTests
         _userManagerMock.Setup(x => x.GeneratePasswordResetTokenAsync(user))
             .ReturnsAsync("mock-reset-token");
 
-        _emailServiceMock.Setup(x => x.ForgotPassword(
-            request.Email,
-            It.IsAny<string>()
-        )).Returns(Task.CompletedTask);
-
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
@@ -479,7 +477,7 @@ public class IdentityControllerTests
             Email = "ghost@example.com"
         };
 
-        //Case 1: User not found
+        // Case 1: User not found — should throw
         _userManagerMock.Setup(x => x.FindByEmailAsync(request.Email))
             .ReturnsAsync((ApplicationUser)null);
 
@@ -489,11 +487,9 @@ public class IdentityControllerTests
             _emailServiceMock.Object
         );
 
-        var result1 = await controller.ForgotPassword(request);
+        await Assert.ThrowsExceptionAsync<ResourceNotFoundException>(() => controller.ForgotPassword(request));
 
-        Assert.IsInstanceOfType(result1, typeof(OkResult));
-
-        //Case 2: User found, but email not confirmed
+        // Case 2: User found but email not confirmed — should return Ok
         var unconfirmedUser = new ApplicationUser
         {
             Email = request.Email,
@@ -505,6 +501,9 @@ public class IdentityControllerTests
 
         _userManagerMock.Setup(x => x.IsEmailConfirmedAsync(unconfirmedUser))
             .ReturnsAsync(false);
+
+        _userManagerMock.Setup(x => x.GeneratePasswordResetTokenAsync(unconfirmedUser))
+            .ReturnsAsync("mock-token");
 
         var result2 = await controller.ForgotPassword(request);
 
@@ -682,6 +681,7 @@ public class IdentityControllerTests
             User = new ClaimsPrincipal(identity)
         };
 
+        _userManagerMock.Setup(x => x.RequireUser(It.IsAny<string[]>())).ReturnsAsync(new ApplicationUser());
         _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
             .ReturnsAsync(new ApplicationUser());
 
@@ -717,6 +717,7 @@ public class IdentityControllerTests
             User = new ClaimsPrincipal(identity)
         };
 
+        _userManagerMock.Setup(x => x.RequireUser(It.IsAny<string[]>())).ReturnsAsync(new ApplicationUser());
         _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
             .ReturnsAsync(new ApplicationUser());
 
@@ -752,6 +753,7 @@ public class IdentityControllerTests
             User = new ClaimsPrincipal(identity)
         };
 
+        _userManagerMock.Setup(x => x.RequireUser(It.IsAny<string[]>())).ReturnsAsync(new ApplicationUser());
         _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
             .ReturnsAsync(new ApplicationUser());
 
