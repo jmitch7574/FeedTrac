@@ -3,6 +3,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using FeedTrac.Server.Controllers;
+using FeedTrac.Server.Extensions;
+using FeedTrac.Server.Services;
 using Microsoft.AspNetCore.Identity;
 using FeedTrac.Server.Database;    //for ApplicationUser
 using Microsoft.AspNetCore.Identity.Data; //for RegisterUserRequest
@@ -19,16 +21,16 @@ using Microsoft.AspNetCore.Mvc;
 [TestClass]
 public class IdentityControllerTests
 {
-    private Mock<UserManager<ApplicationUser>> _userManagerMock;
+    private Mock<FeedTracUserManager> _userManagerMock;
     private Mock<SignInManager<ApplicationUser>> _signInManagerMock;
-    private Mock<IEmailSender<ApplicationUser>> _emailSenderMock;
+    private Mock<EmailService> _emailServiceMock;
     private Mock<IOptionsMonitor<BearerTokenOptions>> _optionsMock;
 
     [TestInitialize]
     public void Setup()
     {
         var store = new Mock<IUserStore<ApplicationUser>>();
-        _userManagerMock = new Mock<UserManager<ApplicationUser>>(store.Object, null, null, null, null, null, null, null, null);
+        _userManagerMock = new Mock<FeedTracUserManager>(store.Object, null, null, null, null, null, null, null, null, new Mock<IHttpContextAccessor>().Object);
 
         var context = new Mock<Microsoft.AspNetCore.Http.HttpContext>();
         _signInManagerMock = new Mock<SignInManager<ApplicationUser>>(
@@ -38,7 +40,7 @@ public class IdentityControllerTests
             null, null, null, null
         );
 
-        _emailSenderMock = new Mock<IEmailSender<ApplicationUser>>();
+        _emailServiceMock = new Mock<EmailService>();
         _optionsMock = new Mock<IOptionsMonitor<BearerTokenOptions>>();
     }
 
@@ -63,8 +65,7 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
 
         //Act
@@ -97,8 +98,7 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
 
         //Act: attempt to register student using weak password
@@ -145,8 +145,7 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
 
         var result = await controller.StudentLogin(loginRequest); //try to log in with wrong password
@@ -189,8 +188,7 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
 
         //try to log in
@@ -222,8 +220,7 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
 
         var result = await controller.RegisterStudent(request);
@@ -272,10 +269,8 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
-
         var result = await controller.RegisterTeacher(request);
 
         Assert.IsInstanceOfType(result, typeof(OkObjectResult));
@@ -311,8 +306,7 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
 
         var result = await controller.RegisterTeacher(request);
@@ -343,8 +337,7 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
 
         var result = await controller.StudentLogin(loginRequest);
@@ -384,8 +377,7 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
 
         var result = await controller.StudentLogin(loginRequest);
@@ -430,8 +422,7 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
 
         var result = await controller.TeacherLogin(loginRequest);
@@ -465,8 +456,7 @@ public class IdentityControllerTests
         _userManagerMock.Setup(x => x.GeneratePasswordResetTokenAsync(user))
             .ReturnsAsync("mock-reset-token");
 
-        _emailSenderMock.Setup(x => x.SendPasswordResetCodeAsync(
-            user,
+        _emailServiceMock.Setup(x => x.ForgotPassword(
             request.Email,
             It.IsAny<string>()
         )).Returns(Task.CompletedTask);
@@ -474,8 +464,7 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
 
         var result = await controller.ForgotPassword(request);
@@ -497,8 +486,7 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
 
         var result1 = await controller.ForgotPassword(request);
@@ -552,11 +540,10 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
 
-        var result = await controller.ResetPassword(request);
+        var result = await controller.ForgotPasswordFollowUp(request);
 
         Assert.IsInstanceOfType(result, typeof(OkResult));
     }
@@ -591,11 +578,10 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
 
-        var result = await controller.ResetPassword(request);
+        var result = await controller.ForgotPasswordFollowUp(request);
 
         Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
 
@@ -621,11 +607,10 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
 
-        var result = await controller.ResetPassword(request);
+        var result = await controller.ForgotPasswordFollowUp(request);
 
         Assert.IsInstanceOfType(result, typeof(BadRequestObjectResult));
 
@@ -643,10 +628,8 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
+            _emailServiceMock.Object
         );
-
         var result = await controller.Logout();
 
         //should return 200 OK with expected message
@@ -666,14 +649,13 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
-        )
+            _emailServiceMock.Object
+        );
         {
-            ControllerContext = new ControllerContext
+            controller.ControllerContext = new ControllerContext
             {
                 HttpContext = httpContext
-            }
+            };
         };
 
         var result = await controller.IsAuthenticated();
@@ -683,9 +665,9 @@ public class IdentityControllerTests
         var ok = result as OkObjectResult;
         Assert.IsNotNull(ok);
 
-        var response = ok.Value as AuthSummary;
+        var response = ok.Value as AuthSummaryResponse;
         Assert.IsNotNull(response);
-        Assert.AreEqual(AuthSummary.AuthStatus.NotAuthenticated, response.status);
+        Assert.AreEqual(AuthSummaryResponse.AuthStatus.NotAuthenticated, response.Status);
     }
     [TestMethod]
     public async Task IsAuthenticated_ReturnsStudentStatus_WhenUserIsStudent()
@@ -706,22 +688,21 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
-        )
+            _emailServiceMock.Object
+        );
         {
-            ControllerContext = new ControllerContext
+            controller.ControllerContext = new ControllerContext
             {
                 HttpContext = httpContext
-            }
+            };
         };
 
         var result = await controller.IsAuthenticated();
 
         Assert.IsInstanceOfType(result, typeof(OkObjectResult));
         var ok = result as OkObjectResult;
-        var response = ok!.Value as AuthSummary;
-        Assert.AreEqual(AuthSummary.AuthStatus.AuthenticatedStudent, response!.status);
+        var response = ok!.Value as AuthSummaryResponse;
+        Assert.AreEqual(AuthSummaryResponse.AuthStatus.AuthenticatedStudent, response!.Status);
     }
     [TestMethod]
     public async Task IsAuthenticated_ReturnsTeacherStatus_WhenUserIsTeacher()
@@ -742,22 +723,21 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
-        )
+            _emailServiceMock.Object
+        );
         {
-            ControllerContext = new ControllerContext
+            controller.ControllerContext = new ControllerContext
             {
                 HttpContext = httpContext
-            }
+            };
         };
 
         var result = await controller.IsAuthenticated();
 
         Assert.IsInstanceOfType(result, typeof(OkObjectResult));
         var ok = result as OkObjectResult;
-        var response = ok!.Value as AuthSummary;
-        Assert.AreEqual(AuthSummary.AuthStatus.AuthenticatedTeacher, response!.status);
+        var response = ok!.Value as AuthSummaryResponse;
+        Assert.AreEqual(AuthSummaryResponse.AuthStatus.AuthenticatedTeacher, response!.Status);
     }
     [TestMethod]
     public async Task IsAuthenticated_ReturnsAdminStatus_WhenUserIsAdmin()
@@ -778,21 +758,20 @@ public class IdentityControllerTests
         var controller = new IdentityController(
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
-        )
+            _emailServiceMock.Object
+        );
         {
-            ControllerContext = new ControllerContext
+            controller.ControllerContext = new ControllerContext
             {
                 HttpContext = httpContext
-            }
+            };
         };
 
         var result = await controller.IsAuthenticated();
 
         Assert.IsInstanceOfType(result, typeof(OkObjectResult));
         var ok = result as OkObjectResult;
-        var response = ok!.Value as AuthSummary;
-        Assert.AreEqual(AuthSummary.AuthStatus.AuthenticatedAdmin, response!.status);
+        var response = ok!.Value as AuthSummaryResponse;
+        Assert.AreEqual(AuthSummaryResponse.AuthStatus.AuthenticatedAdmin, response!.Status);
     }
 }
