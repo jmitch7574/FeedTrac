@@ -16,43 +16,6 @@ using Microsoft.AspNetCore.Authentication.BearerToken;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
-
-//Tests for POST/identity/student/register:
-//registration success
-//weak password
-//email already in use
-
-//Tests for POST/identity/teacher/register
-//register with 2FA key returned
-//password invalid
-
-//Tests for POST/identity/student/login
-//successful login
-//wrong password
-//user not found
-//role mismatch (not a student)
-
-//Tests for POST/identity/teacher/login
-//correct credentials and 2FA           ERROR
-//wrong password                        ERROR
-//incorrect user role (not teacher/admin)
-
-//Tests for POST/identity/forgotPassword
-//user exists and confirmed
-//user does not exist
-
-//Tests for POST/identity/resetPassword
-//valid reset success
-//invalid reset token
-//user not found
-
-//Test for POST/identity/logout
-
-//Tests for GET/identity
-//return correct auth status for roles (student/teacher/admin)
-//return NotAuthenticated when not signed in
-
-
 [TestClass]
 public class IdentityControllerTests
 {
@@ -430,83 +393,6 @@ public class IdentityControllerTests
         // Assert: ForbidResult with custom message
         Assert.IsInstanceOfType(result, typeof(ForbidResult));
     }
-    /*[TestMethod]
-    public async Task TeacherLogin_ReturnsOk_WhenCredentialsAnd2FAValid() //REFACTORING REQUIRED not certain this adequately tests the 2FA/should be tested in separate function
-    {
-        var loginRequest = new TeacherLoginRequest
-        {
-            Email = user.Email,
-            Password = "CorrectPassword123!",
-            TwoFactorCode = "123456",
-            RememberMe = true
-        };
-
-        _userManagerMock.Setup(x => x.FindByEmailAsync(loginRequest.Email))
-            .ReturnsAsync(user);
-
-        _userManagerMock.Setup(x => x.GetRolesAsync(user))
-            .ReturnsAsync(new List<string> { "Teacher" });
-
-        _signInManagerMock.Setup(x => x.CheckPasswordSignInAsync(user, loginRequest.Password, false))
-            .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Success);
-
-        _signInManagerMock.Setup(x => x.SignInAsync(user, loginRequest.RememberMe, null))
-            .Returns(Task.CompletedTask);
-
-        var controller = new IdentityController(
-            _userManagerMock.Object,
-            _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
-        );
-
-        var result = await controller.TeacherLogin(loginRequest);
-
-        Assert.IsInstanceOfType(result, typeof(OkResult));
-    }*/
-    /*[TestMethod]
-    public async Task TeacherLogin_ReturnsUnauthorized_WhenPasswordIsIncorrect()
-    {
-        var user = new FakeApplicationUser
-        {
-            Email = "teacher@example.com",
-            UserName = "teacher@example.com",
-            TwoFactorSecret = "FAKESECRET",
-            Confirm2FATokenDelegate = token => true
-        };
-
-        var loginRequest = new TeacherLoginRequest
-        {
-            Email = user.Email,
-            Password = "WrongPassword!",
-            TwoFactorCode = "123456",
-            RememberMe = false
-        };
-
-        _userManagerMock.Setup(x => x.FindByEmailAsync(loginRequest.Email))
-            .ReturnsAsync(user);
-
-        _userManagerMock.Setup(x => x.GetRolesAsync(user))
-            .ReturnsAsync(new List<string> { "Teacher" });
-
-        _signInManagerMock.Setup(x => x.CheckPasswordSignInAsync(user, loginRequest.Password, false))
-            .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Success);
-
-        var controller = new IdentityController(
-            _userManagerMock.Object,
-            _signInManagerMock.Object,
-            _emailSenderMock.Object,
-            _optionsMock.Object
-        );
-
-        var result = await controller.TeacherLogin(loginRequest);
-
-        Assert.IsInstanceOfType(result, typeof(UnauthorizedObjectResult));
-
-        var unauthorized = result as UnauthorizedObjectResult;
-        Assert.IsNotNull(unauthorized);
-        Assert.AreEqual("Invalid credentials", unauthorized.Value);
-    }*/
     [TestMethod]
     public async Task TeacherLogin_ReturnsUnauthorized_WhenUserIsNotTeacherOrAdmin()
     {
