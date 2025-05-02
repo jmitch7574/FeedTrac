@@ -1,8 +1,8 @@
 ﻿using FeedTrac.Server.Database;
+using FeedTrac.Server.Extensions;
 using FeedTrac.Server.Models.Forms.Ticket;
 using FeedTrac.Server.Models.Responses.Ticket;
 using FeedTrac.Server.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,37 +17,39 @@ public class TicketController : Controller
 {
 
     private readonly ApplicationDbContext _context;
-    private readonly UserService _userService;
+    private readonly FeedTracUserManager _userManager;
     private readonly ModuleService _moduleService;
     private readonly ImageService _imageService;
+    private readonly EmailService _emailService;
 
     /// <summary>
     /// Constructor for Ticket Controller
     /// </summary>
     /// <param name="context"></param>
-    /// <param name="userService"></param>
+    /// <param name="userManager"></param>
     /// <param name="moduleService"></param>
     /// <param name="imageService"></param>
-    public TicketController(ApplicationDbContext context, UserService userService, ModuleService moduleService, ImageService imageService)
+    public TicketController(ApplicationDbContext context, FeedTracUserManager userManager, ModuleService moduleService, ImageService imageService, EmailService emailService)
     {
         _context = context;
-        _userService = userService;
+        _userManager = userManager;
         _moduleService = moduleService;
         _imageService = imageService;
+        _emailService = emailService;
     }
 
     /// <summary>
     /// Gets the tickets for the current user. If the user is a student, it returns the tickets they have made. If the user is a teacher, it returns the tickets for all modules they are assigned to.
     /// </summary>
-    /// <returns></returns>
+    /// <response code="200">Returns user's tickets</response>
+    /// <response code="401">User does not have access to ticket system</response>
     [HttpGet]
+    [ProducesResponseType(typeof(TicketCollectionResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMyTickets()
     {
-        ApplicationUser? user = await _userService.GetCurrentUserAsync();
+        ApplicationUser user = await _userManager.RequireUser();
         
-        if (user is null)
-            return NotFound("User is not logged in.");
-
         if (User.IsInRole("Student"))
         {
             var tickets = _context.Tickets.Where(tick => tick.Owner == user).Include(t => t.Messages).ThenInclude(m => m.Images);
@@ -66,23 +68,23 @@ public class TicketController : Controller
             return Ok(tickets.Select(t => new TicketResponseDto(t)));
         }
 
-        return BadRequest("User is not a student or teacher");
+        throw new UnauthorizedResourceAccessException();
     }
 
     /// <summary>
     /// Get Specific Ticket Information
     /// </summary>
     /// <param name="id">ID of the ticket</param>
+    /// <response code="200">Successfully returns ticket information</response>
+    /// <response code="404">The ticket could not be found</response>
+    /// <response code="401">The user does not have access to this ticket</response>
     [HttpGet("{id}")]
-    [Authorize]
-    [ProducesResponseType(typeof(TicketResponseDto), 200)]
-    [ProducesResponseType(404)]
-    [ProducesResponseType(403)]
+    [ProducesResponseType(typeof(TicketResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetTicket(int id)
     {
-        var user = await _userService.GetCurrentUserAsync();
-        if (user is null)
-            return Unauthorized("User is not logged in");
+        var user = await _userManager.RequireUser();
         
         var ticket = await _context.Tickets
             .Include(ticket => ticket.Owner)
@@ -91,48 +93,52 @@ public class TicketController : Controller
             .FirstOrDefaultAsync(t => t.TicketId == id);
 
         if (ticket == null)
-        {
-            return NotFound();
-        }
+            throw new ResourceNotFoundException();
 
         if (!ticket.DoesUserHaveAccess(user.Id))
-        {
-            return Forbid("User does not have access to the ticket");
-        }
+            throw new UnauthorizedResourceAccessException();
 
         return Ok(new TicketResponseDto(ticket));
     }
 
+    /// <summary>
+    /// Endpoint for creating a ticket
+    /// </summary>
+    /// <param name="request">Ticket info, including title and an optional first message</param>
+    /// <param name="moduleId">The id of the module this ticket should belong to</param>
+    /// <response code ="200">Ticket created successfully</response>
+    /// <response code="401">User does not have access to referenced module</response> 
+    /// <response code ="404">Could not find referenced module</response>
     [HttpPost("{moduleId}/create")]
-    public async Task<IActionResult> CreateTicket([FromForm] TicketCreateDto request, int moduleId)
+    [ProducesResponseType(typeof(TicketResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CreateTicket([FromForm] TicketCreateRequest request, int moduleId)
     {
-        var user = await _userService.GetCurrentUserAsync();
-        if (user is null)
-            return Unauthorized("User is not logged in");
+        var user = await _userManager.RequireUser();
         
         var targetModule = await _context.Modules
             .Include(m => m.StudentModule)
                 .ThenInclude(sm => sm.User)
+            .Include(m => m.TeacherModule)
+            .   ThenInclude(tm => tm.User)
             .FirstOrDefaultAsync(m => m.Id == moduleId);
 
         if (targetModule == null)
-        {
-            return NotFound("Module not found");
-        }
+            throw new ResourceNotFoundException();
 
 
-        if (targetModule.StudentModule.Find(sm => sm.User.Id == _userService.GetCurrentUserId() && sm.Module == targetModule) == null)
-        {
-            return BadRequest("User is not a part of the module");
-        }
+        if (targetModule.StudentModule.Find(sm => sm.User.Id == user.Id && sm.Module == targetModule) == null)
+            throw new UnauthorizedResourceAccessException();
         
         var ticket = new FeedbackTicket
         {
             Module = targetModule,
+            OwnerId = user.Id,
             Owner = user,
             Title = request.Title,
             CreatedOn = DateTime.UtcNow,
-            status = FeedbackTicket.TicketStatus.Open,
+            Status = FeedbackTicket.TicketStatus.Open,
             LastUpdated = DateTime.UtcNow
         };
 
@@ -159,34 +165,41 @@ public class TicketController : Controller
 
         await _context.SaveChangesAsync();
 
-        return Ok();
+        _emailService.NotifyTeachersAboutTicket(ticket);
+
+        return Ok(new TicketResponseDto(ticket));
     }
 
 
+    /// <summary>
+    /// Adds a message update to a ticket
+    /// </summary>
+    /// <param name="request">The details of the message</param>
+    /// <param name="ticketId">The ticket to append this message to</param>
+    /// <response code="200">Message added successfully</response>
+    /// <response code="404">Ticket not found</response>
+    /// <response code="401">User does not have access to referenced ticket</response>
     [HttpPost("{ticketId}/addMessage")]
-    [Authorize]
-    public async Task<IActionResult> AddMessageToTicket([FromForm] MessageCreateDto request, int ticketId)
+    [ProducesResponseType(typeof(TicketResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> AddMessageToTicket([FromForm] MessageCreateRequest request, int ticketId)
     {
-        var user = await _userService.GetCurrentUserAsync();
-        if (user is null)
-            return Unauthorized("User is not logged in");
+        var user = await _userManager.RequireUser();
         
         var ticket = await _context.Tickets
             .Include(t => t.Owner)
             .Include(t => t.Module)
+            .Include(t => t.Module)
                 .ThenInclude(m => m.TeacherModule)
-                .ThenInclude(m => m.User)
+                    .ThenInclude(tm => tm.User)
             .FirstOrDefaultAsync(t => t.TicketId == ticketId);
 
         if (ticket == null)
-        {
-            return NotFound("Ticket not found");
-        }
+            throw new  ResourceNotFoundException();
 
-        if (ticket.Owner != await _userService.GetCurrentUserAsync() && ticket.Module.TeacherModule.Find(tm => tm.User.Id == user.Id) == null)
-        {
-            return Forbid("User does not have access to the ticket");
-        }
+        if (ticket.Owner != user && ticket.Module.TeacherModule.Find(tm => tm.User.Id == user.Id) == null)
+            throw new UnauthorizedResourceAccessException();
 
         var message = new FeedbackMessage
         {
@@ -204,7 +217,7 @@ public class TicketController : Controller
         // If the message is from a teacher, set the status to "In Progress"
         if (User.IsInRole("Teacher"))
         {
-            ticket.status = FeedbackTicket.TicketStatus.InProgress;
+            ticket.Status = FeedbackTicket.TicketStatus.InProgress;
         }
 
         // Update changes made to the ticket
@@ -219,12 +232,26 @@ public class TicketController : Controller
         }
 
         await _context.SaveChangesAsync();
-        return Ok();
+        
+        await _emailService.NotifyTicketMessage(message);
+        return Ok(new TicketResponseDto(ticket));
     }
 
+    /// <summary>
+    /// Mark a ticket as resolved
+    /// </summary>
+    /// <param name="ticketId">Which ticket to mark as resolved</param>
+    /// <response code="200">Ticket marked as resolved successfully</response>
+    /// <response code="404">Referenced ticket could not be found</response>
+    /// <response code="401">User does not have access to referenced ticket</response>
     [HttpPost("{ticketId}/markAsResolved")]
+    [ProducesResponseType(typeof(TicketResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> MarkAsResolved(int ticketId)
     {
+        var user = await _userManager.RequireUser();
+        
         FeedbackTicket? ticket = await _context.Tickets
             .Include(t => t.Owner)
             .Include(t => t.Module)
@@ -233,16 +260,13 @@ public class TicketController : Controller
             .FirstOrDefaultAsync(t => t.TicketId == ticketId);
 
         if (ticket is null)
-            return NotFound("Ticket could not be found");
+            throw new ResourceNotFoundException();
 
-        var user = await _userService.GetCurrentUserAsync();
 
-        if (ticket.Owner != await _userService.GetCurrentUserAsync() && ticket.Module.TeacherModule.Find(tm => tm.User.Id == user.Id) == null)
-        {
-            return Forbid("User does not have access to the ticket");
-        }
+        if (ticket.Owner != user && ticket.Module.TeacherModule.Find(tm => tm.User.Id == user.Id) == null)
+            throw new UnauthorizedResourceAccessException();
 
-        ticket.status = FeedbackTicket.TicketStatus.Closed;
+        ticket.Status = FeedbackTicket.TicketStatus.Closed;
         ticket.LastUpdated = DateTime.UtcNow;
         ticket.Messages.Add(new FeedbackMessage
         {
@@ -256,7 +280,9 @@ public class TicketController : Controller
         _context.Tickets.Update(ticket);
         await _context.SaveChangesAsync();
 
-        return Ok();
+        await _emailService.TicketResolved(ticket);
+        
+        return Ok(new TicketResponseDto(ticket));
     }
 
 
