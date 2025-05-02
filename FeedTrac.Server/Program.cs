@@ -131,7 +131,7 @@ namespace FeedTrac.Server
             {
                 options.AddPolicy("Localhost", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5174")
+                    policy.WithOrigins("http://localhost:5173")
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();
@@ -142,6 +142,8 @@ namespace FeedTrac.Server
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
+            app.UseRouting();
+
             app.UseCors("Localhost");
             app.UseMiddleware<FeedTracMiddleware>(); // Register your custom middleware
 
@@ -157,6 +159,7 @@ namespace FeedTrac.Server
             app.UseHttpsRedirection();
             app.MapControllers();
             
+            app.UseAuthentication(); // ← Add this!
 
             app.UseAuthorization();
 
