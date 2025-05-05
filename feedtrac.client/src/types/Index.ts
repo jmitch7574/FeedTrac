@@ -95,12 +95,18 @@ export type ForgotPasswordRequest = {
 export type ForgotPasswordResponse = {
   code: string;
 };
+
 // reset password request type
-export type ResetPasswordRequest = {
+export type ForgotPasswordFollowupRequest = {
   email: string;
   resetCode: string;
   newPassword: string;
 };
+
+export type ResetPasswordRequest = {
+  currentPassword: string;
+  newPassword: string;
+}
 
 // token refresh request and response types
 export type RefreshRequest = {

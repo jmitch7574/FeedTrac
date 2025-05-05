@@ -1,5 +1,15 @@
 import { apiClient } from "@/lib/apiClient";
-import { AuthResponse, ForgotPasswordRequest, IdentityResponse, ResetPasswordRequest, studentLogin, studentRegister, teacherLogin, teacherRegister } from "@/types/Index";
+import {
+  AuthResponse,
+  ForgotPasswordRequest,
+  IdentityResponse,
+  ForgotPasswordFollowupRequest,
+  studentLogin,
+  studentRegister,
+  teacherLogin,
+  teacherRegister,
+  ResetPasswordRequest
+} from "@/types/Index";
 import axios from "axios";
 
 // auth for students
@@ -95,7 +105,7 @@ export const forgotPasswordRequest = async (data: ForgotPasswordRequest): Promis
 };
 
 // forgot password followup
-export const forgotPasswordRequestFollowUp = async (data: ResetPasswordRequest): Promise<void> => {
+export const forgotPasswordRequestFollowUp = async (data: ForgotPasswordFollowupRequest): Promise<void> => {
   // -- forgot password request for any user
   try {
     await apiClient.post("/identity/forgotPassword/followup", data);

@@ -74,7 +74,7 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
           </form>
         </CardContent>
       </Card>
-      <ErrorBox errors={[error]}></ErrorBox>
+      <ErrorBox errors={error.length > 0 ? [error] : []}></ErrorBox>
     </div>
   );
 }
