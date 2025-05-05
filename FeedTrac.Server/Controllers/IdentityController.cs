@@ -124,20 +124,20 @@ public class IdentityController : ControllerBase
     {
 
         var user = await _userManager.FindByEmailAsync(login.Email);
-        if (user == null) return Unauthorized("Invalid credentials");
+        if (user == null) return Unauthorized(new { error = "Invalid credentials"});
 
         // Check user role before allowing login
         var roles = await _userManager.GetRolesAsync(user);
         if (!roles.Contains("Student")) // Change condition as needed
         {
-            return BadRequest("This endpoint is for student accounts only");
+            return BadRequest(new { error = "This endpoint is for signing into student accounts only"});
         }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
-        if (!result.Succeeded) return Unauthorized("Invalid credentials");
+        if (!result.Succeeded) return Unauthorized(new { error = "Invalid credentials"});
 
         await _signInManager.SignInAsync(user, isPersistent: login.RememberMe);
-        return Ok();
+        return Ok(new { message = "Logged in successfully"});
     }
 
     /// <summary>
@@ -152,13 +152,13 @@ public class IdentityController : ControllerBase
     public async Task<IActionResult> TeacherLogin([FromBody] TeacherLoginRequest login)
     {
         var user = await _userManager.FindByEmailAsync(login.Email);
-        if (user == null) return Unauthorized("User not found");
+        if (user == null) return Unauthorized(new { error = "Invalid credentials"});
 
         // Check user role before allowing login
         var roles = await _userManager.GetRolesAsync(user);
         if (!roles.Contains("Teacher") && !roles.Contains("Admin")) // Change condition as needed
         {
-            return BadRequest("Not a teacher account");
+            return BadRequest(new { error = "This endpoint is for signing into teacher accounts only"});
         }
 
 
@@ -166,15 +166,15 @@ public class IdentityController : ControllerBase
 
         if (!isValid)
         {
-            return Unauthorized("Invalid two-factor code");
+            return Unauthorized(new { error = "Invalid 2FA code"});
         }
 
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
-        if (!result.Succeeded) return Unauthorized("Invalid credentials");
+        if (!result.Succeeded) return Unauthorized(new { error = "Invalid credentials"});
 
         await _signInManager.SignInAsync(user, isPersistent: login.RememberMe);
-        return Ok();
+        return Ok(new { message = "Logged in successfully"});
     }
 
     /// <summary>
@@ -210,7 +210,7 @@ public class IdentityController : ControllerBase
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
         {
-            return BadRequest("Could not find user.");
+            return BadRequest(new { error = "Could not find user"});
         }
         var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.ResetCode));
         var result = await _userManager.ResetPasswordAsync(user, code, request.NewPassword);
@@ -249,7 +249,7 @@ public class IdentityController : ControllerBase
     public async Task<IActionResult> Logout()
     {
         await _signInManager.SignOutAsync();
-        return Ok("Logged out successfully");
+        return Ok(new { message = "Logged out successfully"});
     }
 
     /// <summary>

@@ -13,6 +13,7 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
   const [Email, setEmail] = useState("umarnauman@lincoln.ac.uk");
   const [Password, setPassword] = useState("Test1234!");
   const navigate = useNavigate();
+  let [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -29,8 +30,9 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
       const res = await loginStudent(payload);
       console.log("Success:", res.token); // store token or redirect
       navigate("/"); // redirect to home page
-    } catch (err) {
+    } catch (err : any) {
       console.error("Sign in failed:", err);
+      setError(err.response.data.error);
     }
   };
 
@@ -65,13 +67,18 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
             </div>
             <div className='mt-4 text-center text-sm'>
               Don&apos;t Have an account?{" "}
-              <Link to='/signup' className='underline underline-offset-4'>
+              <Link to='/student/signup' className='underline underline-offset-4'>
                 Sign up
               </Link>
             </div>
           </form>
         </CardContent>
       </Card>
+      <div className='mt-4 text-center text-sm'>
+        {
+          <p>{error}</p>
+        }
+      </div>
     </div>
   );
 }

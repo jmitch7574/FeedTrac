@@ -13,6 +13,7 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
   const [LastName, setLastName] = useState("test");
   const [Email, setEmail] = useState("test@test.com");
   const [Password, setPassword] = useState("Test1234!");
+  const [errors, setErrors] = useState([] as Array<any>);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -27,8 +28,9 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
     try {
       const res = await registerStudent(payload);
       console.log("Success:", res.token); // store token or redirect
-    } catch (err) {
+    } catch (err : any) {
       console.error("Registration failed:", err);
+      setErrors(err.response.data);
     }
   };
 
@@ -68,13 +70,20 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
             </div>
             <div className='mt-4 text-center text-sm'>
               Have an account?{" "}
-              <Link to='/signin' className='underline underline-offset-4'>
+              <Link to='/student/signin' className='underline underline-offset-4'>
                 Sign in
               </Link>
             </div>
           </form>
         </CardContent>
       </Card>
+      <div className='mt-4 text-center text-sm'>
+        {
+          errors.map((error : any) => (
+            <p>{error.description}</p>
+          ))
+        }
+      </div>
     </div>
   );
 }
