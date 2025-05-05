@@ -113,6 +113,7 @@ namespace FeedTrac.Server
             builder.Services.AddScoped<ImageService>();
             builder.Services.AddScoped<FeedTracUserManager>();
             builder.Services.AddScoped<EmailService>();
+            builder.Services.AddScoped<PasswordGenerator>();
 
             builder.Services.Configure<IdentityOptions>(options =>
             {

@@ -22,7 +22,6 @@ export type teacherRegister = {
   Email: string;
   FirstName: string;
   LastName: string;
-  Password: string;
 };
 // student login request type
 export type teacherLogin = {

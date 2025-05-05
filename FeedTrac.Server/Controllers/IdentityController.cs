@@ -28,6 +28,7 @@ public class IdentityController : ControllerBase
     private readonly FeedTracUserManager _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly EmailService _emailService;
+    private readonly PasswordGenerator _passwordGenerator;
 
     /// <summary>
     /// 
@@ -35,13 +36,16 @@ public class IdentityController : ControllerBase
     /// <param name="userManager"></param>
     /// <param name="signInManager"></param>
     /// <param name="emailService"></param>
+    /// <param name="passwordGenerator"></param>
     public IdentityController(FeedTracUserManager userManager,
                               SignInManager<ApplicationUser> signInManager,
-                              EmailService emailService)
+                              EmailService emailService,
+                              PasswordGenerator passwordGenerator)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _emailService = emailService;
+        _passwordGenerator = passwordGenerator;
     }
 
     /// <summary>
@@ -77,11 +81,13 @@ public class IdentityController : ControllerBase
     [HttpPost("teacher/register")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> RegisterTeacher([FromBody] RegisterUserRequest request)
+    public async Task<IActionResult> RegisterTeacher([FromBody] RegisterTeacherRequest request)
     {
+        string password = PasswordGenerator.GeneratePassword();
         await _userManager.RequireUser("Admin");
         var user = new ApplicationUser { UserName = request.Email, Email = request.Email, FirstName = request.FirstName, LastName = request.LastName };
-        var result = await _userManager.CreateAsync(user, request.Password);
+
+        var result = await _userManager.CreateAsync(user, password);
 
         if (!result.Succeeded)
         {
@@ -102,7 +108,7 @@ public class IdentityController : ControllerBase
         // Update the user with the changes
         await _userManager.UpdateAsync(user);
         
-        await _emailService.TeacherWelcomeEmail(user, request.Password);
+        await _emailService.TeacherWelcomeEmail(user, password);
         
         RegisteredTeacher response = new RegisteredTeacher
         {

@@ -12,7 +12,6 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
   const [FirstName, setFirstName] = useState("test");
   const [LastName, setLastName] = useState("test");
   const [Email, setEmail] = useState("teacher@lincoln.ac.uk");
-  const [Password, setPassword] = useState("Test1234!");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -21,7 +20,6 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
       FirstName,
       LastName,
       Email,
-      Password,
     };
 
     try {
@@ -55,10 +53,6 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
               <div className='grid gap-3'>
                 <Label htmlFor='email'>Email</Label>
                 <Input id='email' type='email' placeholder='johndoe@example.com' required value={Email} onChange={(e) => setEmail(e.target.value)} />
-              </div>
-              <div className='grid gap-3'>
-                <Label htmlFor='password'>Password</Label>
-                <Input id='password' type='password' placeholder='Enter your password' required value={Password} onChange={(e) => setPassword(e.target.value)} />
               </div>
               <div className='flex flex-col gap-3'>
                 <Button type='submit' className='w-full'>
