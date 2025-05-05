@@ -1,9 +1,9 @@
 import { apiClient } from "@/lib/apiClient";
-import { Module, moduleName, ModuleResponse } from "@/types/Index";
+import { Module, ModuleResponse } from "@/types/Index";
 import axios from "axios";
 
 // modules related endpoints
-export const getAllModulesUser = async (): Promise<ModuleResponse> => {
+export const getAllModulesForUser = async (): Promise<ModuleResponse> => {
   // -- get all modules for user
   try {
     const response = await apiClient.get("/modules");
@@ -33,10 +33,10 @@ export const getAllModules = async (): Promise<ModuleResponse> => {
   }
 };
 
-export const joinModule = async (data: Module): Promise<ModuleResponse> => {
+export const joinModule = async (joinCode: string): Promise<Module> => {
   // -- join module
   try {
-    const response = await apiClient.post("/modules/join", data);
+    const response = await apiClient.post(`/modules/join?joinCode=${joinCode}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
@@ -91,10 +91,24 @@ export const studentLeaveModule = async (id: number): Promise<void> => {
   }
 };
 
-export const createModule = async (data: moduleName): Promise<ModuleResponse> => {
-  // -- create a module using name
+// export const createModule = async (data: moduleName): Promise<Module> => {
+//   // -- create a module using name
+//   try {
+//     const response = await apiClient.post(`/create`, data);
+//     return response.data;
+//   } catch (error) {
+//     if (axios.isAxiosError(error) && error.response) {
+//       console.error("Error response:", error.response.data);
+//     } else {
+//       console.error("Error:", error);
+//     }
+//     throw error;
+//   }
+// };
+
+export const createModule = async (name: string): Promise<Module> => {
   try {
-    const response = await apiClient.post(`/create`, data);
+    const response = await apiClient.post(`/create?name=${encodeURIComponent(name)}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {

@@ -2,18 +2,18 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
 import "./index.css";
-import App from "./App.tsx";
 import SsignUp from "./pages/auth/students/SignUp.tsx";
 import SsignIn from "./pages/auth/students/SignIn.tsx";
 
 import TsignUp from "./pages/auth/teachers/SignUp.tsx";
 import TsignIn from "./pages/auth/teachers/SignIn.tsx";
+import Dashboard from "./components/dashboard/dashboard";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path='/' element={<App />} />
+        <Route path='/' element={<Dashboard />} />
         <Route path='*' element={<h1>404</h1>} />
         // -- route for students
         <Route path='/student'>

@@ -5,7 +5,7 @@ import axios from "axios";
 export const getUser = async (): Promise<PublicUser> => {
   // -- get user data
   try {
-    const response = await apiClient.get("/user");
+    const response = await apiClient.get("/identity");
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {

@@ -1,14 +1,28 @@
 import { Link } from "react-router";
+import { Button } from "../ui/button";
+import DeleteModule from "../auth/admin/DeleteModule";
+import useRole from "@/hooks/useRole";
+import LeaveModule from "./leaveModule";
 
-const ModuleCard = ({ moduleName }: { moduleName: string }) => {
+interface ModuleCardProps {
+  moduleName: string;
+  moduleCode?: string;
+  id: number;
+}
+
+const ModuleCard: React.FC<ModuleCardProps> = ({ moduleName, moduleCode, id }) => {
+  const role = useRole(); // Get the user's role using the custom hook
+
   return (
-    <Link to={`/module/${moduleName}`} className='h-[192px] w-[328px] bg-gray-300 rounded flex justify-center items-center text-2xl outline-dashed outline-2 outline-gray-400 hover:bg-gray-400 transition duration-200 ease-in-out'>
-      <p>{moduleName}</p>
+    <Link to={`/module/${moduleName}`}>
+      <Button className='relative h-[192px] w-[328px] text-black bg-gray-300 rounded flex flex-col  justify-center items-center hover:bg-gray-400 transition duration-200 ease-in-out'>
+        {role === "admin" && <DeleteModule moduleId={id} />}
+        {role === "student" && <LeaveModule moduleId={id} />}
+        <p className='text-2xl capitalize text-wrap'>{moduleName}</p>
+        <p className='font-normal'>Join Code: {moduleCode}</p>
+      </Button>
     </Link>
   );
 };
 
-{
-  /* <div className='h-[192px] w-[328px] bg-gray-300 rounded flex justify-center items-center text-2xl outline-dashed outline-2 outline-gray-400'>{moduleName}</div>; */
-}
 export default ModuleCard;
