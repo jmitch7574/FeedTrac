@@ -3,16 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router";
 import { useState } from "react";
 import { teacherLogin as teacherLoginType } from "@/types/Index";
 import { loginTeacher } from "@/hooks/useAuth";
 import { useNavigate } from "react-router";
+import ErrorBox from "@/components/ui/ErrorBox.tsx";
 
 export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
   const [Email, setEmail] = useState("feedtrac-admin@lincoln.ac.uk");
   const [Password, setPassword] = useState("Password123!");
   const [twoFactorCode, setTwoFactorCode] = useState("");
+  let [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -31,8 +32,9 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
       const res = await loginTeacher(payload);
       console.log("Success:", res.token); // store token or redirect
       navigate("/"); // redirect to home page
-    } catch (err) {
+    } catch (err : any) {
       console.error("Sign in failed:", err);
+      setError(err.response.data.error);
     }
   };
 
@@ -69,15 +71,10 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
                 </Button>
               </div>
             </div>
-            <div className='mt-4 text-center text-sm'>
-              Don&apos;t Have an account?{" "}
-              <Link to='/signup' className='underline underline-offset-4'>
-                Sign up
-              </Link>
-            </div>
           </form>
         </CardContent>
       </Card>
+      <ErrorBox errors={[error]}></ErrorBox>
     </div>
   );
 }

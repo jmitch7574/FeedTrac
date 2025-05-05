@@ -8,6 +8,7 @@ import { useState } from "react";
 import { studentLogin } from "@/types/Index";
 import { loginStudent } from "@/hooks/useAuth";
 import { useNavigate } from "react-router";
+import ErrorBox from "@/components/ui/ErrorBox.tsx";
 
 export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
   const [Email, setEmail] = useState("umarnauman@lincoln.ac.uk");
@@ -74,11 +75,7 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
           </form>
         </CardContent>
       </Card>
-      <div className='mt-4 text-center text-sm'>
-        {
-          <p>{error}</p>
-        }
-      </div>
+      <ErrorBox errors={error.length > 0 ? [error] : []}></ErrorBox>
     </div>
   );
 }
