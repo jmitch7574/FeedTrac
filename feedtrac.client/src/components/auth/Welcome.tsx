@@ -14,7 +14,7 @@ const Welcome = () => {
 
     getUser()
       .then((res) => {
-        const user = res.userInfo;
+        const user = res;
         setFirstName(user.firstName);
         setLastName(user.lastName);
         setLoading(false);

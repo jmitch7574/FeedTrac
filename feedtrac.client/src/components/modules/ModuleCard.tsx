@@ -14,7 +14,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ moduleName, moduleCode, id }) =
   const role = useRole(); // Get the user's role using the custom hook
 
   return (
-    <Link to={`/module/${moduleName}`}>
+    <Link to={`/module/${id}`}>
       <Button className='relative h-[192px] w-[328px] text-black bg-gray-300 rounded flex flex-col  justify-center items-center hover:bg-gray-400 transition duration-200 ease-in-out'>
         {role === "admin" && <DeleteModule moduleId={id} />}
         {role === "student" && <LeaveModule moduleId={id} />}

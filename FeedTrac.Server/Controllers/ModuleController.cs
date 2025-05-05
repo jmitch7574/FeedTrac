@@ -221,7 +221,7 @@ public class ModuleController : Controller
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateModule(string name)
     {
-        var user = await _userManager.RequireUser("Teacher");
+        var user = await _userManager.RequireUser("Teacher", "Admin");
         
         Module newModule = new Module
         {
