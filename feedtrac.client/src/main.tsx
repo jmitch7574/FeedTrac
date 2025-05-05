@@ -9,26 +9,34 @@ import TsignUp from "./pages/auth/teachers/SignUp.tsx";
 import TsignIn from "./pages/auth/teachers/SignIn.tsx";
 import Dashboard from "./components/dashboard/dashboard";
 import RequireAuth from "@/components/auth/requireAuth.tsx";
+import InsufficientPermission from "@/pages/InsufficientPermission.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
         <Route path='/student'>
+          // -- route for students
           <Route path='/student/signup' element={<SsignUp />} />
           <Route path='/student/signin' element={<SsignIn />} />
         </Route>
+        
+        <Route path='/insufficientPermissions' element={<InsufficientPermission />}/>
+        
         // -- route for teachers
-        <Route path='/teacher'>
-          <Route path='/teacher/signup' element={<TsignUp />} />
-          <Route path='/teacher/signin' element={<TsignIn />} />
-        </Route>
+        <Route path='/teacher/signin' element={<TsignIn />} />
 
-        <Route element={<RequireAuth />}>
+        // -- Require auth
+        <Route element={<RequireAuth level={0}/>}>
           <Route path='/' element={<Dashboard />} />
           <Route path='*' element={<h1>404</h1>} />
         </Route>
-        // -- route for students
+        
+        // -- routes for Admins
+        <Route element={<RequireAuth level={2}/>}>
+          <Route path='/teacher/signup' element={<TsignUp />} />
+        </Route>
+        
       </Routes>
     </BrowserRouter>
   </StrictMode>

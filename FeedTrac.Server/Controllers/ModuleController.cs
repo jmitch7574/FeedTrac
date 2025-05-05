@@ -78,7 +78,7 @@ public class ModuleController : Controller
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> JoinModule(string joinCode)
     {
-        var user = await _userManager.RequireUser("Student", "Teacher");
+        var user = await _userManager.RequireUser();
 
         var userId = user.Id;
         var module = await _context.Modules
@@ -103,7 +103,7 @@ public class ModuleController : Controller
                 Module = module
             });
         }
-        if (await _userManager.IsInRoleAsync(user, "Teacher"))
+        if (await _userManager.IsInRoleAsync(user, "Teacher") || await _userManager.IsInRoleAsync(user, "Admin"))
         {
             if (module.TeacherModule.Find(sm => sm.UserId == userId && sm.Module == module) != null)
                 return BadRequest(new { error = "User is already a part of this module" });

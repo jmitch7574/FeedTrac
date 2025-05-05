@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import { apiClient } from "@/lib/apiClient";
 
-const RequireAuth = () => {
+interface Props
+{
+    level: number;
+}
+
+const RequireAuth = ({level}:  Props) => {
     const navigate = useNavigate();
     const [checking, setChecking] = useState(true);
 
@@ -13,6 +18,20 @@ const RequireAuth = () => {
                 if (res.data.status === "NotAuthenticated") {
                     navigate("/student/signin", { replace: true });
                 }
+                
+                let userLevel : number = 0
+                if (res.data.status === "AuthenticatedStudent")
+                    userLevel = 0
+                if (res.data.status === "AuthenticatedTeacher")
+                    userLevel = 1
+                if (res.data.status === "AuthenticatedAdmin")
+                    userLevel = 2
+                
+                if (userLevel < level)
+                {
+                    navigate("/insufficientPermissions", { replace: true });
+                }
+                
             } catch (err) {
                 console.error("Error checking auth:", err);
                 navigate("/student/signin", { replace: true });
