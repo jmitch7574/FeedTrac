@@ -22,7 +22,6 @@ export type teacherRegister = {
   Email: string;
   FirstName: string;
   LastName: string;
-  Password: string;
 };
 // student login request type
 export type teacherLogin = {
@@ -40,6 +39,16 @@ export type AuthResponse = {
     email: string;
     firstName: string;
     lastName: string;
+  };
+};
+
+export type IdentityResponse = {
+  status: string;
+  userInfo: {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
   };
 };
 
@@ -86,12 +95,18 @@ export type ForgotPasswordRequest = {
 export type ForgotPasswordResponse = {
   code: string;
 };
+
 // reset password request type
-export type ResetPasswordRequest = {
+export type ForgotPasswordFollowupRequest = {
   email: string;
   resetCode: string;
   newPassword: string;
 };
+
+export type ResetPasswordRequest = {
+  currentPassword: string;
+  newPassword: string;
+}
 
 // token refresh request and response types
 export type RefreshRequest = {
@@ -101,3 +116,38 @@ export type RefreshRequest = {
 export type RefreshResponse = {
   token: string;
 };
+
+// ticket related types
+
+export interface TicketMessage {
+  id: number;
+  senderId: string;
+  senderName: string;
+  content: string;
+  createdAt: string;
+  imageIds: number[];
+}
+
+export interface Ticket {
+  id: number;
+  title: string;
+  messages: TicketMessage[];
+  createdAt: string;
+  updatedAt: string;
+  status: number;
+}
+
+export interface TicketResponse {
+  tickets: Ticket[];
+}
+
+export interface CreateTicketFormData {
+  title: string;
+  content: string;
+  images?: File[];
+}
+
+export interface AddMessageFormData {
+  content: string;
+  images?: File[];
+}

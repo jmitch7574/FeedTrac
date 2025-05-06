@@ -7,12 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 import type { studentRegister as studentRegisterType } from "@/types/Index";
 import { registerStudent } from "@/hooks/useAuth";
+import ErrorBox from "@/components/ui/ErrorBox.tsx";
 
 export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
   const [FirstName, setFirstName] = useState("test");
   const [LastName, setLastName] = useState("test");
   const [Email, setEmail] = useState("test@test.com");
   const [Password, setPassword] = useState("Test1234!");
+  const [errors, setErrors] = useState([] as Array<any>);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -27,8 +29,15 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
     try {
       const res = await registerStudent(payload);
       console.log("Success:", res.token); // store token or redirect
-    } catch (err) {
+    } catch (err : any) {
       console.error("Registration failed:", err);
+      
+      var errorList : string[] = []
+      err.response.data.map((error: { description: string; }) =>
+      {
+        errorList.push(error.description);
+      })
+      setErrors(errorList);
     }
   };
 
@@ -36,7 +45,7 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className='text-2xl'>Create an account</CardTitle>
+          <CardTitle className='text-2xl'>Create a student account</CardTitle>
           <CardDescription>Enter your details below to sign up for an account</CardDescription>
         </CardHeader>
         <CardContent>
@@ -68,13 +77,20 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
             </div>
             <div className='mt-4 text-center text-sm'>
               Have an account?{" "}
-              <Link to='/signin' className='underline underline-offset-4'>
+              <Link to='/student/signin' className='underline underline-offset-4'>
+                Sign in
+              </Link>
+            </div>
+            <div className='mt-4 text-center text-sm'>
+              Are you a teacher?{" "}
+              <Link to='/teacher/signin' className='underline underline-offset-4'>
                 Sign in
               </Link>
             </div>
           </form>
         </CardContent>
       </Card>
+      <ErrorBox errors={errors}></ErrorBox>
     </div>
   );
 }

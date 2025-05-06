@@ -23,6 +23,11 @@ namespace FeedTrac.Server.Database
         public required string Content { get; set; }
 
         /// <summary>
+        /// Referenced Images for the message
+        /// </summary>
+        public List<MessageImage> Images { get; set; } = new();
+
+        /// <summary>
         /// The ID of the ticket this message belongs to
         /// </summary>
         [Column(TypeName ="int")]
@@ -36,9 +41,17 @@ namespace FeedTrac.Server.Database
         public required FeedbackTicket Ticket { get; set; }
 
         /// <summary>
+        /// Id of the author
+        /// </summary>
+        
+        [Column(TypeName ="text")]
+        [Required]
+        public required string AuthorId { get; set; }
+        /// <summary>
         /// The author of the message
         /// </summary>
         [Required]
+        [ForeignKey(nameof(AuthorId))]
         public required ApplicationUser Author { get; set; }
 
         /// <summary>

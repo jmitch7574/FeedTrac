@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
 
 namespace FeedTrac.Server.Database
 {
@@ -15,20 +14,40 @@ namespace FeedTrac.Server.Database
         public DbSet<Module> Modules { get; set; }
 
         /// <summary>
-        /// The student-to-modules table
+        /// Many to Many collection that links Modules and Students
         /// </summary>
         public DbSet<StudentModule> StudentModules { get; set; }
 
-        public DbSet<StudentModule> TeacherModules { get; set; }
+        /// <summary>
+        /// Many to Many collection that links Modules and Teachers
+        /// </summary>
+        public DbSet<TeacherModule> TeacherModules { get; set; }
+
+        /// <summary>
+        /// Tickets Table
+        /// </summary>
+        public DbSet<FeedbackTicket> Tickets { get; set; }
+
+        /// <summary>
+        /// Messages Table
+        /// </summary>
+        public DbSet<FeedbackMessage> Messages { get; set; }
+
+        /// <summary>
+        /// Images table
+        /// </summary>
+        public DbSet<MessageImage> Images { get; set; }
 
         /// <summary>
         /// The feedback tickets table
         /// </summary>
         public DbSet<FeedbackTicket> FeedbackTicket { get; set; }
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-        {
-            
-        }
+        
+        /// <summary>
+        /// DBContext Constructor
+        /// </summary>
+        /// <param name="options"></param>
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
         /// <summary>
         /// Configures the database schema
@@ -56,42 +75,53 @@ namespace FeedTrac.Server.Database
 
             builder.Entity<StudentModule>()
                 .HasOne(um => um.User)
-                .WithMany(u => u.EnrolledModules) // Assuming a collection exists in ApplicationUser
+                .WithMany(u => u.EnrolledModules)
                 .HasForeignKey(um => um.UserId)
-                .OnDelete(DeleteBehavior.Cascade); // Optional, specify cascade or restrict
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<StudentModule>()
                 .HasOne(um => um.Module)
-                .WithMany(m => m.StudentModule) // Assuming a collection exists in Module
+                .WithMany(m => m.StudentModule)
                 .HasForeignKey(um => um.ModuleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
 
             builder.Entity<TeacherModule>()
                 .HasOne(um => um.User)
-                .WithMany(u => u.TeachingModules) // Assuming a collection exists in ApplicationUser
+                .WithMany(u => u.TeachingModules)
                 .HasForeignKey(um => um.UserId)
-                .OnDelete(DeleteBehavior.Cascade); // Optional, specify cascade or restrict
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<TeacherModule>()
                 .HasOne(um => um.Module)
-                .WithMany(m => m.TeacherModule) // Assuming a collection exists in Module
+                .WithMany(m => m.TeacherModule)
                 .HasForeignKey(um => um.ModuleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<FeedbackTicket>()
                 .HasOne(um => um.Owner)
-                .WithMany(m => m.Tickets) // Assuming a collection exists in Module
+                .WithMany(m => m.Tickets)
                 .HasForeignKey(um => um.OwnerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
 
             builder.Entity<FeedbackTicket>()
                 .HasOne(um => um.Module)
-                .WithMany(m => m.Tickets) // Assuming a collection exists in Module
+                .WithMany(m => m.Tickets)
                 .HasForeignKey(um => um.ModuleId)
                 .OnDelete(DeleteBehavior.Cascade);
-        }
 
+            builder.Entity<FeedbackMessage>()
+                .HasOne(fm => fm.Ticket)
+                .WithMany(ft => ft.Messages)
+                .HasForeignKey(fm => fm.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<MessageImage>()
+                .HasOne(im => im.Message)
+                .WithMany(fm => fm.Images)
+                .HasForeignKey(im => im.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
     }
 }

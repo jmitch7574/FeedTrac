@@ -1,28 +1,24 @@
-
 using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using FeedTrac.Server.Services;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using OtpNet;
-using System.Reflection;
-using System.Runtime.ConstrainedExecution;
 
 namespace FeedTrac.Server
 {
     /// <summary>
     /// The entry class of the project
     /// </summary>
-    public class Program
+    public abstract class Program
     {
+        public static string TEST_ADMIN_2FA = "VMNAYBBTP4PHHMNF53O2W5UGRJDD442G";
+        
         /// <summary>
         /// Create our custom roles
         /// </summary>
         /// <param name="serviceProvider">Service provider made in main</param>
         /// <returns></returns>
-        async static Task CreateRolesAsync(IServiceProvider serviceProvider)
+        static async Task CreateRolesAsync(IServiceProvider serviceProvider)
         {
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
@@ -38,14 +34,16 @@ namespace FeedTrac.Server
         }
 
 
-        async static Task CreateDefaultAdministrator(IServiceProvider serviceProvider)
+        static async Task CreateDefaultAdministrator(IServiceProvider serviceProvider)
         {
             var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
             var admin = await userManager.FindByEmailAsync("feedtrac-admin@lincoln.ac.uk");
             if (admin != null)
             {
+                // Check the admins 2FA secret is correct
+                admin.TwoFactorSecret = TEST_ADMIN_2FA;
+                await userManager.UpdateAsync(admin);
                 return;
             }
 
@@ -56,11 +54,6 @@ namespace FeedTrac.Server
                 LastName = "Admin",
                 Email = "feedtrac-admin@lincoln.ac.uk"
             };
-
-
-
-            // Generate and manually set the key (e.g., store in DB)
-            var key = "VMNAYBBTP4PHHMNF53O2W5UGRJDD442G";
 
             var result = await userManager.CreateAsync(admin, "Password123!");
             if (!result.Succeeded)
@@ -74,7 +67,7 @@ namespace FeedTrac.Server
 
 
             await userManager.AddToRoleAsync(admin, "Admin");
-            admin.TwoFactorSecret = key;
+            admin.TwoFactorSecret = TEST_ADMIN_2FA;
 
 
             await userManager.UpdateAsync(admin);
@@ -87,21 +80,13 @@ namespace FeedTrac.Server
         /// <returns></returns>
         public static async Task Main(string[] args)
         {
+            // Load our environment variables
+            EnvironmentVariables.Load();
+            
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddCors(options =>
-{
-            options.AddPolicy("AllowFrontend", policy =>
-            {
-                policy.WithOrigins("http://localhost:5173")
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowCredentials();
-            });
-        });
-
-
             // Add services to the container.
+
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddSwaggerGen(options =>
@@ -116,41 +101,52 @@ namespace FeedTrac.Server
 
             // Establish Connection to SQL Server
             builder.Services.AddAuthorization();
-            // builder.Services.AddAuthentication().AddCookie(IdentityConstants.ApplicationScheme);
-
-            builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
-    .AddCookie(IdentityConstants.ApplicationScheme, options =>
-    {
-        options.Cookie.HttpOnly = true;
-        options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-    });
-
-
-
+            builder.Services.AddAuthentication().AddCookie(IdentityConstants.ApplicationScheme);
 
             builder.Services.AddIdentityCore<ApplicationUser>()
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddApiEndpoints();
 
-            builder.Services.AddScoped<UserService>();
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ModuleService>();
-            builder.Services.AddScoped<FeedbackService>();
-            builder.Services.AddScoped<UserManager<ApplicationUser>, FeedTracUserManager>();
+            builder.Services.AddScoped<ImageService>();
+            builder.Services.AddScoped<FeedTracUserManager>();
+            builder.Services.AddScoped<EmailService>();
+            builder.Services.AddScoped<PasswordGenerator>();
 
             builder.Services.Configure<IdentityOptions>(options =>
             {
                 options.SignIn.RequireConfirmedEmail = false; // Optional
                 options.SignIn.RequireConfirmedPhoneNumber = false; // Optional
-                options.Tokens.AuthenticatorTokenProvider = default; // Remove 2FA providers
+                options.Tokens.AuthenticatorTokenProvider = null!; // Remove 2FA providers
+            });
+
+            builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.Cookie.SameSite = SameSiteMode.None; // Cross-origin cookie allowed
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // HTTPS required
+            });
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("Localhost", policy =>
+                {
+                    policy.WithOrigins("http://localhost:5173")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
             });
 
             var app = builder.Build();
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
-            app.UseCors("AllowFrontend");
+            app.UseRouting();
+
+            app.UseCors("Localhost");
+            app.UseMiddleware<FeedTracMiddleware>(); 
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -163,7 +159,9 @@ namespace FeedTrac.Server
 
             app.UseHttpsRedirection();
             app.MapControllers();
-            app.UseAuthentication();
+            
+            app.UseAuthentication(); 
+
             app.UseAuthorization();
 
             app.MapFallbackToFile("/index.html");

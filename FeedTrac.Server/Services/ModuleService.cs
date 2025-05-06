@@ -1,91 +1,82 @@
 ﻿using FeedTrac.Server.Database;
-using FeedTrac.Server.Models.Responses.Modules;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using FeedTrac.Server.Extensions;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace FeedTrac.Server.Services;
 
+/// <summary>
+/// Service class for modules
+/// </summary>
 public class ModuleService
 {
     private readonly ApplicationDbContext _context;
-    private readonly UserService _userService;
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly FeedTracUserManager _userManager;
 
-    public ModuleService(ApplicationDbContext context, UserService userService, IHttpContextAccessor httpContextAccessor)
+    /// <summary>
+    /// Initializes the module service
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="userManager"></param>
+    public ModuleService(ApplicationDbContext context, FeedTracUserManager userManager)
     {
         _context = context;
-        _userService = userService;
-        _httpContextAccessor = httpContextAccessor;
+        _userManager = userManager;
     }
 
+    /// <summary>
+    /// Returns all modules that a user has access to
+    /// </summary>
+    /// <returns></returns>
     public async Task<List<Module>> GetUserModulesAsync()
     {
-        var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-            throw new Exception("User is not logged in.");
+        // Get our module
+        var user = await _userManager.RequireUser();
+        
+        // Get all applicable modules
+        List<Module> modules = await _context.Modules
+            .Include(m => m.StudentModule)
+            .ThenInclude(sm => sm.User)
+            .Include(m => m.TeacherModule)
+            .ThenInclude(tm => tm.User)
+            .Where(
+                m => m.StudentModule.FirstOrDefault(sm => sm.User == user) != null ||
+                     m.TeacherModule.FirstOrDefault(tm => tm.User == user) != null
+            ).ToListAsync();
 
-        return await _context.Modules.Where(m => m.StudentModule.Any(u => u.User.Id == userId) || m.TeacherModule.Any(u => u.User.Id == userId)).ToListAsync();
+        return modules;
     }
 
+    /// <summary>
+    /// Gets all modules
+    /// </summary>
+    /// <returns></returns>
+    public async Task<List<Module>> GetAllModulesAsync()
+    {
+        await _userManager.RequireUser("Admin");
+        
+        // Get all applicable modules
+        List<Module> modules = await _context.Modules.ToListAsync();
+
+        return modules;
+    }
+
+/*
+    /// <summary>
+    /// Gets module by specific ID
+    /// </summary>
+    /// <param name="id">ID of the module to get</param>
+    /// <returns></returns>
+    /// <exception cref="Exception">Module cannot be found</exception>
     public async Task<Module> GetModuleAsync(int id)
     {
-        var module = await _context.Modules.Where(m => m.Id == id).Include(m => m.StudentModule).FirstOrDefaultAsync();
+        var module = await _context.Modules.Where(m => m.Id == id)
+            .Include(m => m.StudentModule)
+            .FirstOrDefaultAsync();
+
         if (module == null)
             throw new Exception("Module not found.");
 
         return module;
     }
-
-    public async Task<Module> JoinModule(string joinCode)
-    {
-        var userId = _userService.GetCurrentUserId();
-        var module = await _context.Modules.Where(m => m.JoinCode == joinCode).FirstOrDefaultAsync();
-        if (module == null)
-            throw new Exception("Module not found.");
-
-        module.StudentModule.Add(new StudentModule
-        {
-            UserId = userId,
-            ModuleId = module.Id
-        });
-        await _context.SaveChangesAsync();
-        return module;
-    }
-
-    public async Task<Module> RenameModule(int moduleId, string newName)
-    {
-        Module module = await _context.Modules.FindAsync(moduleId);
-        if (module == null)
-            throw new Exception("Module not found.");
-
-        module.Name = newName;
-        _context.Modules.Update(module);
-        await _context.SaveChangesAsync();
-
-        return module;
-    }
-
-    public async Task<Module> CreateModuleAsync(string ModuleName)
-    {
-        Module newModule = new Module
-        {
-            Name = ModuleName,
-            JoinCode = Guid.NewGuid().ToString().Substring(0, 6)
-        };
-
-        _context.Modules.Add(newModule);
-        await _context.SaveChangesAsync();
-        return newModule;
-    }
-
-    public async Task DeleteModuleAsync(int moduleId)
-    {
-        Module targetModule = await GetModuleAsync(moduleId);
-
-        _context.Modules.Remove(targetModule);
-        await _context.SaveChangesAsync();
-        return;
-    }
+*/
 }

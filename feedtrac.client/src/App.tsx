@@ -1,6 +1,8 @@
 import { Link } from "react-router";
 import { getUser } from "./hooks/useUser";
 import { useEffect, useState } from "react";
+import ModuleCard from "./components/modules/ModuleCard";
+import CreateModule from "./components/modules/CreateModule";
 
 function App() {
   const [firstName, setFirstName] = useState<string | null>(null);
@@ -19,6 +21,9 @@ function App() {
         setError("Failed to fetch user data");
         setLoading(false);
       });
+
+    // -- get user modules
+    // getUserModules();
   }, []); // Empty dependency array to run this effect once on mount
 
   if (loading) {
@@ -41,6 +46,10 @@ function App() {
         <Link to='/signin' className='text-blue-500 hover:underline'>
           Sign In
         </Link>
+      </div>
+      <div className='flex flex-row gap-4'>
+        <CreateModule />
+        <ModuleCard moduleName='computer science' />
       </div>
     </div>
   );

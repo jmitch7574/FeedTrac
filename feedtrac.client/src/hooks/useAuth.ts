@@ -1,5 +1,15 @@
 import { apiClient } from "@/lib/apiClient";
-import { AuthResponse, ForgotPasswordRequest, ResetPasswordRequest, studentLogin, studentRegister, teacherLogin, teacherRegister } from "@/types/Index";
+import {
+  AuthResponse,
+  ForgotPasswordRequest,
+  IdentityResponse,
+  ForgotPasswordFollowupRequest,
+  studentLogin,
+  studentRegister,
+  teacherLogin,
+  teacherRegister,
+  ResetPasswordRequest
+} from "@/types/Index";
 import axios from "axios";
 
 // auth for students
@@ -79,12 +89,57 @@ export const resetPasswordRequest = async (data: ResetPasswordRequest): Promise<
   }
 };
 
-// forgot password request - implemented here but not in the backend ❌
-// TODO: Implement this in the backend
+// forgot password request
 export const forgotPasswordRequest = async (data: ForgotPasswordRequest): Promise<void> => {
   // -- forgot password request for any user
   try {
-    await apiClient.post("/identity/forgotPassword", data);
+    await apiClient.post("/identity/forgotPassword/request", data);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error("Error response:", error.response.data);
+    } else {
+      console.error("Error:", error);
+    }
+    throw error;
+  }
+};
+
+// forgot password followup
+export const forgotPasswordRequestFollowUp = async (data: ForgotPasswordFollowupRequest): Promise<void> => {
+  // -- forgot password request for any user
+  try {
+    await apiClient.post("/identity/forgotPassword/followup", data);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error("Error response:", error.response.data);
+    } else {
+      console.error("Error:", error);
+    }
+    throw error;
+  }
+};
+
+// logout point
+export const userLogout = async (): Promise<void> => {
+  // -- forgot password request for any user
+  try {
+    await apiClient.post("/identity/logout");
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error("Error response:", error.response.data);
+    } else {
+      console.error("Error:", error);
+    }
+    throw error;
+  }
+};
+
+// get user info
+export const getUserInfo = async (): Promise<IdentityResponse> => {
+  // -- get user info
+  try {
+    const response = await apiClient.get("/identity");
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       console.error("Error response:", error.response.data);

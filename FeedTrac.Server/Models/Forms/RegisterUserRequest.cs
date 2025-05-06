@@ -1,25 +1,17 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-
-// MODIFIED BY JAKE MITCHELL FOR THE PURPOSES OF THE FEEDTRAC PROJECT
-// WOULD HAVE LOVED TO JUST DO AN INHERITANCE THING BUT THE IDENTITY API IS SEALED
-
-using Microsoft.AspNetCore.Routing;
-
-namespace Microsoft.AspNetCore.Identity.Data;
+﻿namespace FeedTrac.Server.Models.Forms;
 
 /// <summary>
-/// The request type for the "/login" endpoint added by <see cref="IdentityApiEndpointRouteBuilderExtensions.MapIdentityApi"/>.
+/// Request type for endpoint <see cref="FeedTrac.Server.Controllers.IdentityController.RegisterStudent"/>
 /// </summary>
 public class RegisterUserRequest
 {
     /// <summary>
-    /// The user's email address which acts as a user name.
+    /// The user's email address
     /// </summary>
     public required string Email { get; init; }
 
     /// <summary>
-    /// The user's password.
+    /// The user's password
     /// </summary>
     public required string Password { get; init; }
 
