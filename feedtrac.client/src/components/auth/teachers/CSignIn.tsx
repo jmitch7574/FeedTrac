@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { Link } from "react-router";
 import { teacherLogin as teacherLoginType } from "@/types/Index";
 import { loginTeacher } from "@/hooks/useAuth";
 import { useNavigate } from "react-router";
@@ -70,6 +71,12 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
                   Sign into your account
                 </Button>
               </div>
+            </div>
+            <div className='mt-4 text-center text-sm'>
+              Are you a student?{" "}
+              <Link to='/student/signin' className='underline underline-offset-4'>
+                Sign in here
+              </Link>
             </div>
           </form>
         </CardContent>

@@ -72,6 +72,12 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
                 Sign up
               </Link>
             </div>
+            <div className='mt-4 text-center text-sm'>
+              Are you a teacher?{" "}
+              <Link to='/teacher/signin' className='underline underline-offset-4'>
+                Sign in
+              </Link>
+            </div>
           </form>
         </CardContent>
       </Card>
