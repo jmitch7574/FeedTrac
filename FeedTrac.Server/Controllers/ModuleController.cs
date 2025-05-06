@@ -43,7 +43,7 @@ public class ModuleController : Controller
     [HttpGet]
     [ProducesResponseType(typeof(ModuleCollectionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetUserModules()
+    public virtual async Task<IActionResult> GetUserModules()
     {
         List<Module> modules = await _moduleService.GetUserModulesAsync();
         return Ok(new ModuleCollectionDto(modules));
@@ -58,7 +58,7 @@ public class ModuleController : Controller
     [HttpGet("all")]
     [ProducesResponseType(typeof(ModuleCollectionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetAllModules()
+    public virtual async Task<IActionResult> GetAllModules()
     {
         var modules = await _moduleService.GetAllModulesAsync();
         return Ok(new ModuleCollectionDto(modules));

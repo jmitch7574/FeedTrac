@@ -11,37 +11,37 @@ namespace FeedTrac.Server.Database
         /// <summary>
         /// The modules table
         /// </summary>
-        public DbSet<Module> Modules { get; set; }
+        public virtual DbSet<Module> Modules { get; set; }
 
         /// <summary>
         /// Many to Many collection that links Modules and Students
         /// </summary>
-        public DbSet<StudentModule> StudentModules { get; set; }
+        public virtual DbSet<StudentModule> StudentModules { get; set; }
 
         /// <summary>
         /// Many to Many collection that links Modules and Teachers
         /// </summary>
-        public DbSet<TeacherModule> TeacherModules { get; set; }
+        public virtual DbSet<TeacherModule> TeacherModules { get; set; }
 
         /// <summary>
         /// Tickets Table
         /// </summary>
-        public DbSet<FeedbackTicket> Tickets { get; set; }
+        public virtual DbSet<FeedbackTicket> Tickets { get; set; }
 
         /// <summary>
         /// Messages Table
         /// </summary>
-        public DbSet<FeedbackMessage> Messages { get; set; }
+        public virtual DbSet<FeedbackMessage> Messages { get; set; }
 
         /// <summary>
         /// Images table
         /// </summary>
-        public DbSet<MessageImage> Images { get; set; }
+        public virtual DbSet<MessageImage> Images { get; set; }
 
         /// <summary>
         /// The feedback tickets table
         /// </summary>
-        public DbSet<FeedbackTicket> FeedbackTicket { get; set; }
+        public virtual DbSet<FeedbackTicket> FeedbackTicket { get; set; }
         
         /// <summary>
         /// DBContext Constructor
