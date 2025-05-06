@@ -42,7 +42,7 @@ const RenderModules = () => {
   }
 
   return (
-    <div className='flex flex-row flex-wrap'>
+    <div className='flex flex-col flex-wrap'>
       <ul className='flex flex-row gap-4 flex-wrap'>
         {modules.map((mod) => (
             <ModuleCard key={mod.id} id={mod.id} moduleName={String(mod.name)} moduleCode={String(mod.joinCode)} />
@@ -51,11 +51,13 @@ const RenderModules = () => {
         {/* Show the CreateModule button for admins and teachers */}
         {(role === "admin" || role === "teacher") && <CreateModule onModuleCreated={handleModuleCreation} />}
   
-        {role === "admin" && <RenderOnlyAdmin />}
   
         {/* Show the JoinModule button for students even if no modules exist */}
         {(role === "student" || role ==="teacher") && <JoinModule onModuleJoined={handleModuleJoined} />}
       </ul>
+      
+      {role === "admin" && <RenderOnlyAdmin />}
+      
     </div>
   );
 };
