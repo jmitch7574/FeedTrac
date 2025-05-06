@@ -49,7 +49,7 @@ const RenderModules = () => {
         ))}
 
         {/* Show the CreateModule button for admins and teachers */}
-        {(role === "admin" || role === "teacher") && modules.length === 0 && <CreateModule onModuleCreated={handleModuleCreation} />}
+        {(role === "admin" || role === "teacher") && <CreateModule onModuleCreated={handleModuleCreation} />}
   
         {role === "admin" && <RenderOnlyAdmin />}
   
