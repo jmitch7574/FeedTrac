@@ -8,8 +8,6 @@ const Welcome = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // if (!isAuthenticated) return; // 🔒 only fetch if logged in
-
     setLoading(true);
 
     getUser()

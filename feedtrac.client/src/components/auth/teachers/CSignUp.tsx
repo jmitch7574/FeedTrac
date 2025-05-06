@@ -12,7 +12,7 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
   const [FirstName, setFirstName] = useState("test");
   const [LastName, setLastName] = useState("test");
   const [Email, setEmail] = useState("teacher@lincoln.ac.uk");
-  const [errors, setErrors] = useState([] as Array<any>);
+  const [errors, setErrors] = useState([] as Array<string>);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,14 +26,13 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
     try {
       const res = await registerTeacher(payload);
       console.log("Success:", res.token); // store token or redirect
-    } catch (err : any) {
+    } catch (err: any) {
       console.error("Registration failed:", err);
 
-      var errorList : string[] = []
-      err.reponse.data.map((error: { description: string; }) =>
-      {
+      const errorList: string[] = [];
+      err.reponse.data.map((error: { description: string }) => {
         errorList.push(error.description);
-      })
+      });
       setErrors(errorList);
     }
   };
