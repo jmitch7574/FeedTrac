@@ -43,6 +43,7 @@ const RenderModules = () => {
 
   return (
     <div className='flex flex-col flex-wrap'>
+      <p className='text-2xl capitalize text-wrap p-5'>Your Modules:</p>
       <ul className='flex flex-row gap-4 flex-wrap'>
         {modules.map((mod) => (
             <ModuleCard key={mod.id} id={mod.id} moduleName={String(mod.name)} moduleCode={String(mod.joinCode)} />
