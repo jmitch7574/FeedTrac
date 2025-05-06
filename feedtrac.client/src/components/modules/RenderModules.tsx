@@ -43,25 +43,19 @@ const RenderModules = () => {
 
   return (
     <div className='flex flex-row flex-wrap'>
-      {modules.length === 0 ? (
-        <p>No modules found.</p>
-      ) : (
-        <ul className='flex flex-row gap-4 flex-wrap'>
-          {(role === "admin" || role === "teacher") && <CreateModule onModuleCreated={handleModuleCreation} />}
-          {role === "student" && <JoinModule onModuleJoined={handleModuleJoined} />}
-          {modules.map((mod) => (
+      <ul className='flex flex-row gap-4 flex-wrap'>
+        {modules.map((mod) => (
             <ModuleCard key={mod.id} id={mod.id} moduleName={String(mod.name)} moduleCode={String(mod.joinCode)} />
-          ))}
-        </ul>
-      )}
+        ))}
 
-      {/* Show the CreateModule button for admins and teachers */}
-      {(role === "admin" || role === "teacher") && modules.length === 0 && <CreateModule onModuleCreated={handleModuleCreation} />}
-
-      {role === "admin" && <RenderOnlyAdmin />}
-
-      {/* Show the JoinModule button for students even if no modules exist */}
-      {role === "student" && modules.length === 0 && <JoinModule onModuleJoined={handleModuleJoined} />}
+        {/* Show the CreateModule button for admins and teachers */}
+        {(role === "admin" || role === "teacher") && modules.length === 0 && <CreateModule onModuleCreated={handleModuleCreation} />}
+  
+        {role === "admin" && <RenderOnlyAdmin />}
+  
+        {/* Show the JoinModule button for students even if no modules exist */}
+        {(role === "student" || role ==="teacher") && <JoinModule onModuleJoined={handleModuleJoined} />}
+      </ul>
     </div>
   );
 };
