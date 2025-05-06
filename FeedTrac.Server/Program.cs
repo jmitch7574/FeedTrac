@@ -146,7 +146,7 @@ namespace FeedTrac.Server
             app.UseRouting();
 
             app.UseCors("Localhost");
-            app.UseMiddleware<FeedTracMiddleware>(); // Register your custom middleware
+            app.UseMiddleware<FeedTracMiddleware>(); 
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -160,7 +160,7 @@ namespace FeedTrac.Server
             app.UseHttpsRedirection();
             app.MapControllers();
             
-            app.UseAuthentication(); // ← Add this!
+            app.UseAuthentication(); 
 
             app.UseAuthorization();
 

@@ -75,39 +75,39 @@ namespace FeedTrac.Server.Database
 
             builder.Entity<StudentModule>()
                 .HasOne(um => um.User)
-                .WithMany(u => u.EnrolledModules) // Assuming a collection exists in ApplicationUser
+                .WithMany(u => u.EnrolledModules)
                 .HasForeignKey(um => um.UserId)
-                .OnDelete(DeleteBehavior.Cascade); // Optional, specify cascade or restrict
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<StudentModule>()
                 .HasOne(um => um.Module)
-                .WithMany(m => m.StudentModule) // Assuming a collection exists in Module
+                .WithMany(m => m.StudentModule)
                 .HasForeignKey(um => um.ModuleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
 
             builder.Entity<TeacherModule>()
                 .HasOne(um => um.User)
-                .WithMany(u => u.TeachingModules) // Assuming a collection exists in ApplicationUser
+                .WithMany(u => u.TeachingModules)
                 .HasForeignKey(um => um.UserId)
-                .OnDelete(DeleteBehavior.Cascade); // Optional, specify cascade or restrict
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<TeacherModule>()
                 .HasOne(um => um.Module)
-                .WithMany(m => m.TeacherModule) // Assuming a collection exists in Module
+                .WithMany(m => m.TeacherModule)
                 .HasForeignKey(um => um.ModuleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<FeedbackTicket>()
                 .HasOne(um => um.Owner)
-                .WithMany(m => m.Tickets) // Assuming a collection exists in Module
+                .WithMany(m => m.Tickets)
                 .HasForeignKey(um => um.OwnerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
 
             builder.Entity<FeedbackTicket>()
                 .HasOne(um => um.Module)
-                .WithMany(m => m.Tickets) // Assuming a collection exists in Module
+                .WithMany(m => m.Tickets)
                 .HasForeignKey(um => um.ModuleId)
                 .OnDelete(DeleteBehavior.Cascade);
 

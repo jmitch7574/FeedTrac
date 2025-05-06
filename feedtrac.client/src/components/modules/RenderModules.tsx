@@ -48,13 +48,12 @@ const RenderModules = () => {
         {modules.map((mod) => (
             <ModuleCard key={mod.id} id={mod.id} moduleName={String(mod.name)} moduleCode={String(mod.joinCode)} />
         ))}
+        
+        <JoinModule onModuleJoined={handleModuleJoined} />
 
         {/* Show the CreateModule button for admins and teachers */}
         {(role === "admin" || role === "teacher") && <CreateModule onModuleCreated={handleModuleCreation} />}
-  
-  
-        {/* Show the JoinModule button for students even if no modules exist */}
-        {(role === "student" || role ==="teacher") && <JoinModule onModuleJoined={handleModuleJoined} />}
+        
       </ul>
       
       {role === "admin" && <RenderOnlyAdmin />}
