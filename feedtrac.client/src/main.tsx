@@ -11,6 +11,9 @@ import RequireAuth from "@/components/auth/requireAuth.tsx";
 import InsufficientPermission from "@/pages/InsufficientPermission.tsx";
 import Options from "@/pages/Options.tsx";
 import { Toaster } from "./components/ui/sonner.tsx";
+import ModuleDetail from "@/components/modules/ModuleDetails.tsx";
+import TicketDetail from "@/components/tickets/TicketDetails.tsx";
+import Navigation from "@/components/ui/Navigation.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

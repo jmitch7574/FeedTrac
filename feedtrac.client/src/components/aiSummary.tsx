@@ -20,12 +20,12 @@ const AiSummary = ({ ticketId }: AiSummaryProps) => {
 
   return (
     <div>
-      <Card className='flex rounded-3xl flex-col'>
-        <div className='px-5 p py-3 bg-gray-600 font-semibold text-2xl flex items-center'>
+      <Card className='flex rounded-3xl flex-col py-0'>
+        <div className='px-5 p py-3 bg-gray-600 font-semibold text-2xl flex items-center rounded-[inherit] rounded-bl-none rounded-br-none'>
           <Bot className='mx-2 text-gray-200' />
           <p className='text-gray-200'>FeedTrac AI Assistant</p>
         </div>
-        <div className='px-5 py-1'>
+        <div className='px-5 py-1 mb-3'>
           <p>{text}</p>
         </div>
       </Card>
