@@ -1,9 +1,9 @@
 import { apiClient } from "@/lib/apiClient";
-import { AddMessageFormData, CreateTicketFormData, Ticket } from "@/types/Index";
+import { AddMessageFormData, CreateTicketFormData, Ticket, TicketResponse } from "@/types/Index";
 import axios from "axios";
 
 // Ticket related endpoints
-export const getTicketBySignedInUser = async (): Promise<Ticket> => {
+export const getTicketBySignedInUser = async (): Promise<TicketResponse> => {
   // -- get all tickets for user
   try {
     const response = await apiClient.get("/tickets");
@@ -22,7 +22,22 @@ export const getTicketById = async (id: number): Promise<Ticket> => {
   // -- get ticket by id
   try {
     const response = await apiClient.get(`/tickets/${id}`);
-    return response.data.ticket;
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error("Error response:", error.response.data);
+    } else {
+      console.error("Error:", error);
+    }
+    throw error;
+  }
+};
+
+export const getTicketsByModuleId = async (moduleId: number): Promise<Ticket[]> => {
+  // fetch all tickets for the current user in a specific module
+  try {
+    const response = await apiClient.get(`/tickets/getByModuleId/${moduleId}`);
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       console.error("Error response:", error.response.data);
@@ -95,7 +110,6 @@ export const makeTicketResolved = async (ticketId: number): Promise<Ticket> => {
 };
 
 // getting images for a ticket
-
 export const getTicketImage = async (imageId: number): Promise<Blob> => {
   // -- get ticket image by imageId
   try {
@@ -113,8 +127,7 @@ export const getTicketImage = async (imageId: number): Promise<Blob> => {
   }
 };
 
-
-export const getTicketSummary = async (ticketId: number) : Promise<string> => {
+export const getTicketSummary = async (ticketId: number): Promise<string> => {
   try {
     const response = await apiClient.get(`/tickets/${ticketId}/summarize`);
     return response.data.summary;

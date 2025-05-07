@@ -43,21 +43,19 @@ const RenderModules = () => {
 
   return (
     <div className='flex flex-col flex-wrap'>
-      <p className='text-2xl capitalize text-wrap p-5'>Your Modules:</p>
+      <p className='text-2xl capitalize text-wrap'>Your Modules:</p>
       <ul className='flex flex-row gap-4 flex-wrap'>
         {modules.map((mod) => (
-            <ModuleCard key={mod.id} id={mod.id} moduleName={String(mod.name)} moduleCode={String(mod.joinCode)} />
+          <ModuleCard key={mod.id} id={mod.id} moduleName={String(mod.name)} moduleCode={String(mod.joinCode)} />
         ))}
-        
+
         <JoinModule onModuleJoined={handleModuleJoined} />
 
         {/* Show the CreateModule button for admins and teachers */}
         {(role === "admin" || role === "teacher") && <CreateModule onModuleCreated={handleModuleCreation} />}
-        
       </ul>
-      
+
       {role === "admin" && <RenderOnlyAdmin />}
-      
     </div>
   );
 };

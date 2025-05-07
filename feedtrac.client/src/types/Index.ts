@@ -106,7 +106,7 @@ export type ForgotPasswordFollowupRequest = {
 export type ResetPasswordRequest = {
   currentPassword: string;
   newPassword: string;
-}
+};
 
 // token refresh request and response types
 export type RefreshRequest = {

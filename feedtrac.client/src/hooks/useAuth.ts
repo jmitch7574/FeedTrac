@@ -1,15 +1,5 @@
 import { apiClient } from "@/lib/apiClient";
-import {
-  AuthResponse,
-  ForgotPasswordRequest,
-  IdentityResponse,
-  ForgotPasswordFollowupRequest,
-  studentLogin,
-  studentRegister,
-  teacherLogin,
-  teacherRegister,
-  ResetPasswordRequest
-} from "@/types/Index";
+import { AuthResponse, ForgotPasswordRequest, IdentityResponse, ForgotPasswordFollowupRequest, studentLogin, studentRegister, teacherLogin, teacherRegister, ResetPasswordRequest } from "@/types/Index";
 import axios from "axios";
 
 // auth for students
@@ -65,10 +55,12 @@ export const loginTeacher = async (data: teacherLogin): Promise<AuthResponse> =>
     const response = await apiClient.post("/identity/teacher/login", data);
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      console.error("Error response:", error.response.data);
+    if (axios.isAxiosError(error)) {
+      console.error("Status:", error.response?.status);
+      console.error("Data:", error.response?.data);
+      console.error("Headers:", error.response?.headers);
     } else {
-      console.error("Error:", error);
+      console.error("Unexpected error:", error);
     }
     throw error;
   }
