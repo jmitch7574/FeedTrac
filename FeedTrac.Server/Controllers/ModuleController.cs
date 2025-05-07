@@ -139,12 +139,14 @@ public class ModuleController : Controller
         var module = await _context.Modules.Where(m => m.Id == id)
             .Include(m => m.StudentModule)
             .ThenInclude(sm => sm.User)
+            .Include(m => m.TeacherModule)
+            .ThenInclude(tm => tm.User)
             .FirstOrDefaultAsync();
 
         if (module == null)
             throw new ResourceNotFoundException();
 
-        if (! await _userManager.IsInRoleAsync(user, "Admin") && module.StudentModule.FirstOrDefault(sm => sm.UserId == user.Id) == null )
+        if (! await _userManager.IsInRoleAsync(user, "Admin") && !(module.StudentModule.FirstOrDefault(sm => sm.UserId == user.Id) == null || module.TeacherModule.FirstOrDefault(sm => sm.UserId == user.Id) == null))
             throw new UnauthorizedAccessException();
         
         return Ok(new ModuleDto(module));
