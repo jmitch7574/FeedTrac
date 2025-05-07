@@ -12,6 +12,7 @@ import RequireAuth from "@/components/auth/requireAuth.tsx";
 import InsufficientPermission from "@/pages/InsufficientPermission.tsx";
 import Options from "@/pages/Options.tsx";
 import { Toaster } from "./components/ui/sonner.tsx";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -25,6 +26,7 @@ createRoot(document.getElementById("root")!).render(
         </Route>
         
         <Route path='/insufficientPermissions' element={<InsufficientPermission />}/>
+        <Route path='/reset' element={<ForgotPasswordPage />} />
         
         // -- route for teachers
         <Route path='/teacher/signin' element={<TsignIn />} />

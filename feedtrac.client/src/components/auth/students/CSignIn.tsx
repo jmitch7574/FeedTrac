@@ -52,9 +52,9 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
               <div className='grid gap-3'>
                 <div className='flex items-center'>
                   <Label htmlFor='password'>Password</Label>
-                  <a href='#' className='ml-auto inline-block text-sm underline-offset-4 hover:underline'>
-                    Forgot your password?
-                  </a>
+                  <Link to='/reset' className='ml-auto inline-block text-sm underline-offset-4 hover:underline'>
+                    Forgot Password?
+                  </Link>
                 </div>
                 <Input id='password' type='password' placeholder='Enter your password' required value={Password} onChange={(e) => setPassword(e.target.value)} />
               </div>
