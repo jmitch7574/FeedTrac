@@ -56,10 +56,18 @@ public class TicketController : Controller
     public async Task<IActionResult> GetMyTickets()
     {
         ApplicationUser user = await _userManager.RequireUser();
+        var allTickets = _context.Tickets
+            .Include(t => t.Module)
+            .ThenInclude(m => m.TeacherModule)
+            .Include(t => t.Owner)
+            .Include(t => t.Messages)
+            .ThenInclude(m => m.Images)
+            .Include(t => t.Messages)
+            .ThenInclude(m => m.Author);
         
         if (User.IsInRole("Student"))
         {
-            var tickets = _context.Tickets.Where(tick => tick.Owner == user).Include(t => t.Messages).ThenInclude(m => m.Images);
+            var tickets = allTickets.Where(tick => tick.Owner == user);
             return Ok(tickets.Select(t => new TicketResponseDto(t)));
         }
 
@@ -69,13 +77,53 @@ public class TicketController : Controller
             var tickets = new List<FeedbackTicket>();
             foreach (var module in modules)
             {
-                var moduleTickets = _context.Tickets.Where(tick => tick.Module == module).Include(t => t.Messages).ToList();
+                var moduleTickets = allTickets.Where(tick => tick.Module == module).ToList();
                 tickets.AddRange(moduleTickets);
             }
             return Ok(tickets.Select(t => new TicketResponseDto(t)));
         }
 
-        throw new UnauthorizedResourceAccessException();
+        return Unauthorized(new { error = "Admins do not have tickets"});
+    }
+
+    /// <summary>
+    /// Gets a user's assigned tickets within a specific module
+    /// </summary>
+    /// <param name="moduleId">The module</param>
+    /// <returns></returns>
+    [HttpGet("getByModuleId/{moduleId}")]
+    public async Task<IActionResult> GetMyTicketsInModule(int moduleId)
+    {
+        ApplicationUser user = await _userManager.RequireUser();
+        var allTickets = _context.Tickets
+            .Include(t => t.Module)
+            .ThenInclude(m => m.TeacherModule)
+            .Include(t => t.Owner)
+            .Include(t => t.Messages)
+            .ThenInclude(m => m.Images)
+            .Include(t => t.Messages)
+            .ThenInclude(m => m.Author)
+            .Where(t => t.ModuleId == moduleId);
+        
+        if (User.IsInRole("Student"))
+        {
+            var tickets = allTickets.Where(tick => tick.Owner == user);
+            return Ok(tickets.Select(t => new TicketResponseDto(t)));
+        }
+
+        if (User.IsInRole("Teacher"))
+        {
+            var modules = await _moduleService.GetUserModulesAsync();
+            var tickets = new List<FeedbackTicket>();
+            foreach (var module in modules)
+            {
+                var moduleTickets = allTickets.Where(tick => tick.Module == module).ToList();
+                tickets.AddRange(moduleTickets);
+            }
+            return Ok(tickets.Select(t => new TicketResponseDto(t)));
+        }
+
+        return Unauthorized(new { error = "Admins do not have tickets"});
     }
 
     /// <summary>
