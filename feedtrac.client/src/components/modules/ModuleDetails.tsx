@@ -31,8 +31,8 @@ export default function ModuleDetail() {
   if (!module) return <p>Module not found</p>;
 
   return (
-    <section className='h-screen bg-gray-100 flex flex-col'>
-      <div className='flex flex-col  bg-gray-200 h-full  py-4 px-6'>
+    <section className='h-screen bg-gray-100  flex flex-col'>
+      <div className='flex flex-col  h-full  py-4 px-6'>
         <div className='flex flex-row gap-2 items-center justify-between mb-2'>
           <h1 className='text-2xl font-bold capitalize'>{String(module.name)}</h1>
           <p className='text-sm text-gray-600'>Join Code: {module.joinCode}</p>

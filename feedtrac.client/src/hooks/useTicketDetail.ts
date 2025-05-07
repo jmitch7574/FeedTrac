@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getTicketById, addMessageToTicket, makeTicketResolved, summarizeTicket } from "@/hooks/useTickets";
+import { getTicketById, addMessageToTicket, makeTicketResolved, getTicketSummary } from "@/hooks/useTickets";
 import { Ticket } from "@/types/Index";
 
 export default function useTicketDetail(ticketId: number) {
@@ -49,7 +49,7 @@ export default function useTicketDetail(ticketId: number) {
   }, [ticket]);
 
   const onSummarize = useCallback(async () => {
-    const sum = await summarizeTicket(ticketId);
+    const sum = await getTicketSummary(ticketId);
     setSummary(sum);
   }, [ticketId]);
 
