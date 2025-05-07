@@ -1,5 +1,4 @@
 import { Link } from "react-router";
-import { Button } from "../ui/button";
 import DeleteModule from "../auth/admin/DeleteModule";
 import useRole from "@/hooks/useRole";
 import LeaveModule from "./leaveModule";
@@ -20,6 +19,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ moduleName, moduleCode, id }) =
         {role === "admin" && <DeleteModule moduleId={id} />}
         {role === "student" && <LeaveModule moduleId={id} />}
         <p className='text-2xl capitalize text-wrap'>{moduleName}</p>
+        <p className='font-normal text-wrap'>{moduleCode}</p>
         <CopyToClipboard text={String(moduleCode)} />
       </div>
     </Link>
