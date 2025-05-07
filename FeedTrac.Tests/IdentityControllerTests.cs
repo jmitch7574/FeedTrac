@@ -18,6 +18,9 @@ using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 [TestClass]
 public class IdentityControllerTests

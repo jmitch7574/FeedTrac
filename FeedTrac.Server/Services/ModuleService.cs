@@ -1,4 +1,6 @@
-﻿using FeedTrac.Server.Database;
+﻿#nullable disable //suppress null warnings
+
+using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,11 +25,17 @@ public class ModuleService
         _userManager = userManager;
     }
 
+    public virtual bool UserIsInModule(ApplicationUser user, int moduleId)
+    {
+        //used to mock an unauthorised user for ImageControllerTests
+        throw new NotImplementedException();
+    }
+
     /// <summary>
     /// Returns all modules that a user has access to
     /// </summary>
     /// <returns></returns>
-    public async Task<List<Module>> GetUserModulesAsync()
+    public virtual async Task<List<Module>> GetUserModulesAsync()
     {
         // Get our module
         var user = await _userManager.RequireUser();
@@ -50,7 +58,7 @@ public class ModuleService
     /// Gets all modules
     /// </summary>
     /// <returns></returns>
-    public async Task<List<Module>> GetAllModulesAsync()
+    public virtual async Task<List<Module>> GetAllModulesAsync()
     {
         await _userManager.RequireUser("Admin");
         

@@ -16,7 +16,7 @@ namespace FeedTrac.Server.Database
         /// User's first name
         /// </summary>
         [ProtectedPersonalData]
-        [Required(ErrorMessage = "First name is Requred")]
+        [Required(ErrorMessage = "First name is Required")]
         [Column(TypeName = "varchar(255)")]
         public virtual string? FirstName { get; set; }
 
@@ -25,7 +25,7 @@ namespace FeedTrac.Server.Database
         /// </summary>
         [ProtectedPersonalData]
         [Column(TypeName = "varchar(255)")]
-        [Required(ErrorMessage = "First name is Requred")]
+        [Required(ErrorMessage = "Last name is Required")]
         public virtual string? LastName { get; set; }
 
         /// <summary>

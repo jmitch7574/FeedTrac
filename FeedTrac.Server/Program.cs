@@ -4,7 +4,6 @@ using FeedTrac.Server.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-FeedTrac.Server.Services.EnvironmentVariables.Load(); //loads .env for testing, ignored on commit. Should be skipped during runtime
 
 namespace FeedTrac.Server
 {

@@ -82,7 +82,7 @@ public class TicketController : Controller
     [ProducesResponseType(typeof(TicketResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetTicket(int id)
+    public virtual async Task<IActionResult> GetTicket(int id)
     {
         var user = await _userManager.RequireUser();
         
@@ -113,7 +113,7 @@ public class TicketController : Controller
     [ProducesResponseType(typeof(TicketResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CreateTicket([FromForm] TicketCreateRequest request, int moduleId)
+    public virtual async Task<IActionResult> CreateTicket([FromForm] TicketCreateRequest request, int moduleId)
     {
         var user = await _userManager.RequireUser();
         
@@ -183,7 +183,7 @@ public class TicketController : Controller
     [ProducesResponseType(typeof(TicketResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> AddMessageToTicket([FromForm] MessageCreateRequest request, int ticketId)
+    public virtual async Task<IActionResult> AddMessageToTicket([FromForm] MessageCreateRequest request, int ticketId)
     {
         var user = await _userManager.RequireUser();
         
@@ -248,7 +248,7 @@ public class TicketController : Controller
     [ProducesResponseType(typeof(TicketResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> MarkAsResolved(int ticketId)
+    public virtual async Task<IActionResult> MarkAsResolved(int ticketId)
     {
         var user = await _userManager.RequireUser();
         

@@ -108,7 +108,7 @@ public class EmailService
 	/// Email teachers and ticket owner when a ticket is marked as resolved
 	/// </summary>
 	/// <param name="ticket"></param>
-	public async Task TicketResolved(FeedbackTicket ticket)
+	public virtual async Task TicketResolved(FeedbackTicket ticket)
 	{
 		List<TeacherModule> teachers = ticket.Module.TeacherModule;
 		
