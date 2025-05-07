@@ -19,8 +19,10 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ moduleName, moduleCode, id }) =
         {role === "admin" && <DeleteModule moduleId={id} />}
         {role === "student" && <LeaveModule moduleId={id} />}
         <p className='text-2xl capitalize text-wrap'>{moduleName}</p>
-        <p className='font-normal text-wrap'>{moduleCode}</p>
-        <CopyToClipboard text={String(moduleCode)} />
+        <div className='flex flex-row gap-2 items-center mt-2'>
+          <CopyToClipboard text={String(moduleCode)} />
+          <p className='font-normal text-wrap'>{moduleCode}</p>
+        </div>
       </div>
     </Link>
   );
