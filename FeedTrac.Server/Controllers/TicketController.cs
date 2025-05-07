@@ -142,9 +142,13 @@ public class TicketController : Controller
         var user = await _userManager.RequireUser();
         
         var ticket = await _context.Tickets
-            .Include(ticket => ticket.Owner)
-            .Include(ticket => ticket.Module)
-                .ThenInclude(module => module.TeacherModule)
+                .Include(t => t.Module)
+                .ThenInclude(m => m.TeacherModule)
+                .Include(t => t.Owner)
+                .Include(t => t.Messages)
+                .ThenInclude(m => m.Images)
+                .Include(t => t.Messages)
+                .ThenInclude(m => m.Author)
             .FirstOrDefaultAsync(t => t.TicketId == id);
 
         if (ticket == null)
