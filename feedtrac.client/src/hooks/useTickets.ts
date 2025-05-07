@@ -112,3 +112,13 @@ export const getTicketImage = async (imageId: number): Promise<Blob> => {
     throw error;
   }
 };
+
+
+export const getTicketSummary = async (ticketId: number) : Promise<string> => {
+  try {
+    const response = await apiClient.get(`/tickets/${ticketId}/summarize`);
+    return response.data.summary;
+  } catch (error) {
+    return "An AI Summary could not be generated at this time";
+  }
+};
