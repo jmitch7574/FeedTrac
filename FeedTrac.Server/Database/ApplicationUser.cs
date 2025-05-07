@@ -66,8 +66,14 @@ namespace FeedTrac.Server.Database
         /// <returns>True if correct, false otherwise</returns>
         public bool Confirm2FaToken(string token)
         {
-            var otp = new Totp(Base32Encoding.ToBytes(this.TwoFactorSecret), step: 30, mode: OtpHashMode.Sha1);
-            return otp.VerifyTotp(token, out _);
+            var otp = new Totp(
+                Base32Encoding.ToBytes(this.TwoFactorSecret),
+                step: 30,
+                mode: OtpHashMode.Sha1,
+                timeCorrection: TimeCorrection.UncorrectedInstance // uses UtcNow
+            );
+
+            return otp.VerifyTotp(token, out _, new VerificationWindow(1, 1)); 
         }
     }
 }
