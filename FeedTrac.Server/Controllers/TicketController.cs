@@ -316,10 +316,16 @@ public class TicketController : Controller
             .Include(t => t.Messages)
             .ThenInclude(m => m.Author)
             .Include(t => t.Module)
+            .ThenInclude(m => m.TeacherModule)
+            .ThenInclude(tm => tm.User)
+            .Include(feedbackTicket => feedbackTicket.Owner)
             .FirstOrDefaultAsync(t => t.TicketId == ticketId);
         
         if (ticket is null)
             throw new ResourceNotFoundException();
+
+        if (ticket.Owner != user && ticket.Module.TeacherModule.Find(tm => tm.User.Id == user.Id) == null)
+            throw new UnauthorizedResourceAccessException();
 
         if (ticket.Messages.Count == 0)
         {
