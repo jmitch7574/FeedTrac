@@ -7,6 +7,7 @@ using OtpNet;
 
 namespace FeedTrac.Server.Database
 {
+
     /// <summary>
     /// Contains information about our user accounts
     /// </summary>
