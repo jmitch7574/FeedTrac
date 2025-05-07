@@ -1,6 +1,9 @@
-﻿using FeedTrac.Server.Database;
+﻿using System.Text;
+using System.Text.Json;
+using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using FeedTrac.Server.Models.Forms.Ticket;
+using FeedTrac.Server.Models.Gemini;
 using FeedTrac.Server.Models.Responses.Ticket;
 using FeedTrac.Server.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +24,7 @@ public class TicketController : Controller
     private readonly ModuleService _moduleService;
     private readonly ImageService _imageService;
     private readonly EmailService _emailService;
+    private readonly IHttpClientFactory _clientFactory;
 
     /// <summary>
     /// Constructor for Ticket Controller
@@ -29,13 +33,16 @@ public class TicketController : Controller
     /// <param name="userManager"></param>
     /// <param name="moduleService"></param>
     /// <param name="imageService"></param>
-    public TicketController(ApplicationDbContext context, FeedTracUserManager userManager, ModuleService moduleService, ImageService imageService, EmailService emailService)
+    /// <param name="emailService"></param>
+    /// <param name="clientFactory"></param>
+    public TicketController(ApplicationDbContext context, FeedTracUserManager userManager, ModuleService moduleService, ImageService imageService, EmailService emailService,  IHttpClientFactory clientFactory)
     {
         _context = context;
         _userManager = userManager;
         _moduleService = moduleService;
         _imageService = imageService;
         _emailService = emailService;
+        _clientFactory = clientFactory;
     }
 
     /// <summary>
@@ -144,28 +151,25 @@ public class TicketController : Controller
 
         _context.Tickets.Add(ticket);
 
-        if (request.FirstMessage != null)
+        var message = new FeedbackMessage
         {
-            var message = new FeedbackMessage
-            {
-                Ticket = ticket,
-                TicketId = ticket.TicketId,
-                Author = user,
-                AuthorId = user.Id,
-                Content = request.FirstMessage.Content,
-                CreatedAt = DateTime.UtcNow
-            };
-            _context.Messages.Add(message);
+            Ticket = ticket,
+            TicketId = ticket.TicketId,
+            Author = user,
+            AuthorId = user.Id,
+            Content = request.FirstMessage.Content,
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Messages.Add(message);
 
-            foreach (var image in request.FirstMessage.Images)
-            {
-                await _imageService.UploadImage(image, message.MessageId);
-            }
+        foreach (var image in request.FirstMessage.Images)
+        {
+            await _imageService.UploadImage(image, message.MessageId);
         }
 
         await _context.SaveChangesAsync();
 
-        _emailService.NotifyTeachersAboutTicket(ticket);
+        await _emailService.NotifyTeachersAboutTicket(ticket);
 
         return Ok(new TicketResponseDto(ticket));
     }
@@ -285,5 +289,86 @@ public class TicketController : Controller
         return Ok(new TicketResponseDto(ticket));
     }
 
+    /// <summary>
+    /// Generates an AI summary of a ticket
+    /// </summary>
+    /// <param name="ticketId"></param>
+    /// <returns></returns>
+    [HttpGet("{ticketId}/summarize")]
+    public async Task<IActionResult> Summarize(int ticketId)
+    {
+        var user = await _userManager.RequireUser();
+        List<string> messages = new() { """
+                                        You are a summarization agent for a ticketing system within an academic institution.
+                                        A "Ticket" in this scenario is a conversation between a student and the module leaders.
+                                        Please summarize the following ticket in just two-to-three sentences, only replying with the summarization. 
+                                        Give advice where possible (only if accurate), and be polite and formal, do not offend anyone. \n
+                                        """};
+                                        
+        
+        string? apiKey = Environment.GetEnvironmentVariable("GEMINI_KEY");
+        var client = _clientFactory.CreateClient();
+        
+        if (apiKey == null)
+            return Unauthorized(new { error = "The Gemini API Key is not setup"});
+        
+        FeedbackTicket? ticket = await _context.Tickets
+            .Include(t => t.Messages)
+            .ThenInclude(m => m.Author)
+            .Include(t => t.Module)
+            .ThenInclude(m => m.TeacherModule)
+            .ThenInclude(tm => tm.User)
+            .Include(feedbackTicket => feedbackTicket.Owner)
+            .FirstOrDefaultAsync(t => t.TicketId == ticketId);
+        
+        if (ticket is null)
+            throw new ResourceNotFoundException();
 
+        if (ticket.Owner != user && ticket.Module.TeacherModule.Find(tm => tm.User.Id == user.Id) == null)
+            throw new UnauthorizedResourceAccessException();
+
+        if (ticket.Messages.Count == 0)
+        {
+            return Ok(new SummarisationResponse("A summary could not be made without any messages"));
+        }
+
+        messages.Add($"Title: {ticket.Title}");
+        messages.Add($"Module: {ticket.Module.Name}");
+        
+        foreach (var message in ticket.Messages)
+        {
+            messages.Add($"{message.Author.FirstName} {message.Author.LastName}: {message.Content}");
+        }
+        
+        GeminiRequest rq =  new GeminiRequest();
+        GeminiContent cq = new GeminiContent();
+        GeminiPart gp = new GeminiPart();
+        gp.Text = string.Join("\n", messages);
+        cq.Parts = new List<GeminiPart>() { gp };
+        rq.Contents = new  List<GeminiContent>() { cq };
+        
+        
+        var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}";
+        var json = JsonSerializer.Serialize(rq);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        
+        var response = await client.PostAsync(url, content);
+        var responseBody =  await response.Content.ReadAsStringAsync();
+        
+        
+        if (!response.IsSuccessStatusCode)
+            return BadRequest(new { error = $"The Gemini API returned a non-successful response {responseBody}" });
+        
+        using var doc = JsonDocument.Parse(responseBody);
+        
+        string text = doc
+            .RootElement
+            .GetProperty("candidates")[0]
+            .GetProperty("content")
+            .GetProperty("parts")[0]
+            .GetProperty("text")
+            .ToString();
+        
+        return Ok(new SummarisationResponse(text));
+    }
 }

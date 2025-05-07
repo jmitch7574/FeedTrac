@@ -11,7 +11,7 @@ public class TicketCreateRequest
     public string Title { get; set; } = string.Empty;
     
     /// <summary>
-    /// Optional First message
+    /// First message
     /// </summary>
-    public MessageCreateRequest? FirstMessage { get; set; }
+    public required MessageCreateRequest FirstMessage { get; set; }
 }

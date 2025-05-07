@@ -109,6 +109,7 @@ namespace FeedTrac.Server
                 .AddApiEndpoints();
 
             builder.Services.AddHttpContextAccessor();
+            builder.Services.AddHttpClient();
             builder.Services.AddScoped<ModuleService>();
             builder.Services.AddScoped<ImageService>();
             builder.Services.AddScoped<FeedTracUserManager>();
