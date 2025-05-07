@@ -1,13 +1,15 @@
 
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Copy } from "lucide-react";
 
 
 const CopyToClipboard = ({text} : {text: string}) => {
     const [copied, setCopied] = useState(false);
 
-    const handleCopy = async () => {
+    const handleCopy = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+    e.preventDefault();
         try {
             await navigator.clipboard.writeText(text);
             setCopied(true);
