@@ -8,13 +8,12 @@ import { useState } from "react";
 import { studentLogin } from "@/types/Index";
 import { loginStudent } from "@/hooks/useAuth";
 import { useNavigate } from "react-router";
-import ErrorBox from "@/components/ui/ErrorBox.tsx";
+import { toast } from "sonner";
 
 export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
   const [Email, setEmail] = useState("umarnauman@lincoln.ac.uk");
   const [Password, setPassword] = useState("Test1234!");
   const navigate = useNavigate();
-  let [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -28,12 +27,11 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
     };
 
     try {
-      const res = await loginStudent(payload);
-      console.log("Success:", res.token); // store token or redirect
+      await loginStudent(payload);
+      toast.success("Sign in successful!");
       navigate("/"); // redirect to home page
-    } catch (err : any) {
-      console.error("Sign in failed:", err);
-      setError(err.response.data.error);
+    } catch (err: any) {
+      toast.error("Sign in failed: " + (err.response?.data?.error || err.message));
     }
   };
 
@@ -81,7 +79,6 @@ export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
           </form>
         </CardContent>
       </Card>
-      <ErrorBox errors={error.length > 0 ? [error] : []}></ErrorBox>
     </div>
   );
 }

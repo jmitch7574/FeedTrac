@@ -7,14 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Link } from "react-router";
 import type { studentRegister as studentRegisterType } from "@/types/Index";
 import { registerStudent } from "@/hooks/useAuth";
-import ErrorBox from "@/components/ui/ErrorBox.tsx";
+import { toast } from "sonner";
 
 export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
   const [FirstName, setFirstName] = useState("test");
   const [LastName, setLastName] = useState("test");
   const [Email, setEmail] = useState("test@test.com");
   const [Password, setPassword] = useState("Test1234!");
-  const [errors, setErrors] = useState([] as Array<any>);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -27,17 +26,10 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
     };
 
     try {
-      const res = await registerStudent(payload);
-      console.log("Success:", res.token); // store token or redirect
-    } catch (err : any) {
-      console.error("Registration failed:", err);
-      
-      var errorList : string[] = []
-      err.response.data.map((error: { description: string; }) =>
-      {
-        errorList.push(error.description);
-      })
-      setErrors(errorList);
+      await registerStudent(payload);
+      toast.success("Account created successfully!");
+    } catch (err: any) {
+      toast.error("Sign up failed: " + (err.response?.data?.error || err.message));
     }
   };
 
@@ -90,7 +82,6 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
           </form>
         </CardContent>
       </Card>
-      <ErrorBox errors={errors}></ErrorBox>
     </div>
   );
 }

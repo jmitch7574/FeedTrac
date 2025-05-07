@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { createModule } from "@/hooks/useModules";
 import { useState } from "react";
 import { Module } from "@/types/Index";
+import { toast } from "sonner";
 
 const CreateModule = ({ onModuleCreated }: { onModuleCreated: (newModule: Module) => void }) => {
   const [moduleName, setModuleName] = useState("");
@@ -13,10 +14,11 @@ const CreateModule = ({ onModuleCreated }: { onModuleCreated: (newModule: Module
     try {
       const res = await createModule(moduleName);
       onModuleCreated(res);
+      toast.success("Module created successfully!");
       setOpen(false); // close the dialog
       setModuleName(""); // reset input
-    } catch (error) {
-      console.error("Error creating module:", error);
+    } catch {
+      toast.error("Failed to create module. Please try again.");
     }
   };
 

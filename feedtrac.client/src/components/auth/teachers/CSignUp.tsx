@@ -7,12 +7,13 @@ import { Label } from "@/components/ui/label";
 import type { teacherRegister } from "@/types/Index";
 import { registerTeacher } from "@/hooks/useAuth";
 import ErrorBox from "@/components/ui/ErrorBox.tsx";
+import { toast } from "sonner";
 
 export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
   const [FirstName, setFirstName] = useState("test");
   const [LastName, setLastName] = useState("test");
   const [Email, setEmail] = useState("teacher@lincoln.ac.uk");
-  const [errors, setErrors] = useState([] as Array<string>);
+  // const [errors, setErrors] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -24,16 +25,10 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
     };
 
     try {
-      const res = await registerTeacher(payload);
-      console.log("Success:", res.token); // store token or redirect
+      await registerTeacher(payload);
+      toast.success("Account created successfully!");
     } catch (err: any) {
-      console.error("Registration failed:", err);
-
-      const errorList: string[] = [];
-      err.reponse.data.map((error: { description: string }) => {
-        errorList.push(error.description);
-      });
-      setErrors(errorList);
+      toast.error("Sign up failed: " + (err.response?.data?.error || err.message));
     }
   };
 

@@ -1,5 +1,6 @@
 import { studentLeaveModule } from "@/hooks/useModules";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const LeaveModule = ({ moduleId }: { moduleId: number }) => {
   const [error, setError] = useState<string | null>(null);
@@ -15,10 +16,9 @@ const LeaveModule = ({ moduleId }: { moduleId: number }) => {
 
     try {
       await studentLeaveModule(moduleId);
-      // Optionally: trigger refresh or notify parent component
-    } catch (err) {
-      console.error("Failed to delete module:", err);
-      setError("Failed to delete module");
+      toast.success("Module left successfully!");
+    } catch {
+      toast.error("Failed to leave module");
     }
   };
 
