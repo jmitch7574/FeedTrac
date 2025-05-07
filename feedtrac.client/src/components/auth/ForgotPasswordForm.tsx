@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";;
 import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import ErrorBox from "@/components/ui/ErrorBox.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {forgotPasswordRequest, forgotPasswordRequestFollowUp} from "@/hooks/useAuth.ts";
@@ -15,6 +16,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
     const [resetCode, setResetCode] = useState<string>("");
     const [NewPassword, setNewPassword] = useState("");
     let [error, setError] = useState("");
+    const navigate = useNavigate();
 
     const sendEmail = async(e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -48,6 +50,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
             await forgotPasswordRequestFollowUp(payload);
             console.log("Success");
             toast.success("Your password has been reset successfully");
+            navigate("/");
         } catch (err : any) {
             console.error("reset failed:", err);
             setError(err.response.data.error);

@@ -3,16 +3,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { joinModule } from "@/hooks/useModules"; // Adjust the import if needed
 import { useState } from "react";
-import { Module } from "@/types/Index";
 
-const JoinModule = ({ onModuleJoined }: { onModuleJoined: (newModule: Module) => void }) => {
+const JoinModule = ({ onModuleJoined }: { onModuleJoined: () => void }) => {
   const [joinCode, setJoinCode] = useState("");
   const [open, setOpen] = useState(false);
 
   const handleSubmit = async () => {
     try {
-      const res = await joinModule(joinCode); // Call joinModule with the joinCode
-      onModuleJoined(res); // Pass the result to the callback
+      await joinModule(joinCode); // Call joinModule with the joinCode
+      onModuleJoined(); // Pass the result to the callback
       setOpen(false); // Close the dialog
       setJoinCode(""); // Reset input field
     } catch (error) {

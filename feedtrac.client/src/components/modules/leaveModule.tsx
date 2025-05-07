@@ -2,7 +2,7 @@ import { studentLeaveModule } from "@/hooks/useModules";
 import { useState } from "react";
 import { toast } from "sonner";
 
-const LeaveModule = ({ moduleId }: { moduleId: number }) => {
+const LeaveModule = ({ moduleId, onModuleDestroy }: { moduleId: number; onModuleDestroy: () => void }) => {
   const [error, setError] = useState<string | null>(null);
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -17,6 +17,7 @@ const LeaveModule = ({ moduleId }: { moduleId: number }) => {
     try {
       await studentLeaveModule(moduleId);
       toast.success("Module left successfully!");
+      onModuleDestroy()
     } catch {
       toast.error("Failed to leave module");
     }

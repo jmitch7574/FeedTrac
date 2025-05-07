@@ -1,7 +1,7 @@
 import { deleteModule } from "@/hooks/useModules";
 import { useState } from "react";
 
-const DeleteModule = ({ moduleId }: { moduleId: number }) => {
+const DeleteModule = ({ moduleId, onModuleDestroy }: { moduleId: number; onModuleDestroy: () => void }) => {
   const [error, setError] = useState<string | null>(null);
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -15,6 +15,7 @@ const DeleteModule = ({ moduleId }: { moduleId: number }) => {
 
     try {
       await deleteModule(moduleId);
+      onModuleDestroy();
       // Optionally: trigger refresh or notify parent component
     } catch (err) {
       console.error("Failed to delete module:", err);

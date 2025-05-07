@@ -11,6 +11,7 @@ const RenderModules = () => {
   const [modules, setModules] = useState<Module[]>([]);
   const [error, setError] = useState<string | null>(null);
   const role = useRole(); // Get the user's role using the custom hook
+  const [refresh, setRefresh] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchModules = async () => {
@@ -25,18 +26,22 @@ const RenderModules = () => {
     };
 
     fetchModules();
-  }, []);
+  }, [refresh]);
 
   // Callback to update modules when a new one is created
-  const handleModuleCreation = async (newModule: Module) => {
-    setModules((prevModules) => [...prevModules, newModule]);
+  const handleModuleCreation = async () => {
+    setRefresh(refresh => !refresh);
   };
 
   // Callback to handle joining a module
-  const handleModuleJoined = (joinedModule: Module) => {
-    setModules((prevModules) => [...prevModules, joinedModule]);
+  const handleModuleJoined = async () => {
+    setRefresh(refresh => !refresh);
   };
 
+  const handleModuleDestroy = () => {
+    setRefresh(refresh => !refresh);
+  }
+  
   if (error) {
     return <div>{error}</div>;
   }
@@ -48,7 +53,7 @@ const RenderModules = () => {
         <JoinModule onModuleJoined={handleModuleJoined} />
 
         {modules.map((mod) => (
-          <ModuleCard key={mod.id} id={mod.id} moduleName={String(mod.name)} moduleCode={String(mod.joinCode)} />
+          <ModuleCard key={mod.id} id={mod.id} moduleName={String(mod.name)} moduleCode={String(mod.joinCode)} onModuleDestroy={handleModuleDestroy} />
         ))}
 
         {/* Show the CreateModule button for admins and teachers */}

@@ -7,7 +7,8 @@ export default function useTicketDetail(ticketId: number) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
-
+  const [refresh, setRefresh] = useState<boolean>(false);
+  
   useEffect(() => {
     if (isNaN(ticketId)) {
       setError("Invalid ticket ID");
@@ -31,13 +32,14 @@ export default function useTicketDetail(ticketId: number) {
     return () => {
       isMounted = false;
     };
-  }, [ticketId]);
+  }, [ticketId, refresh]);
 
   const onAddMessage = useCallback(
     async (content: string) => {
       if (!ticket) return;
       const updated = await addMessageToTicket({ content, images: [] }, ticket.id);
       setTicket(updated);
+      setRefresh(refresh => !refresh);
     },
     [ticket]
   );
@@ -46,6 +48,7 @@ export default function useTicketDetail(ticketId: number) {
     if (!ticket) return;
     const updated = await makeTicketResolved(ticket.id);
     setTicket(updated);
+    setRefresh(refresh => !refresh);
   }, [ticket]);
 
   const onSummarize = useCallback(async () => {

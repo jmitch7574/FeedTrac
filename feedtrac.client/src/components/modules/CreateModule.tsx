@@ -3,17 +3,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { createModule } from "@/hooks/useModules";
 import { useState } from "react";
-import { Module } from "@/types/Index";
 import { toast } from "sonner";
 
-const CreateModule = ({ onModuleCreated }: { onModuleCreated: (newModule: Module) => void }) => {
+const CreateModule = ({ onModuleCreated }: { onModuleCreated: () => void }) => {
   const [moduleName, setModuleName] = useState("");
   const [open, setOpen] = useState(false);
 
   const handleSubmit = async () => {
     try {
-      const res = await createModule(moduleName);
-      onModuleCreated(res);
+      await createModule(moduleName);
+      onModuleCreated();
       toast.success("Module created successfully!");
       setOpen(false); // close the dialog
       setModuleName(""); // reset input

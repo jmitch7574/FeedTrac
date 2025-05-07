@@ -26,6 +26,8 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
         try {
             await resetPasswordRequest(payload);
             console.log("Success");
+            setOldPassword("");
+            setNewPassword("");
         } catch (err : any) {
             console.error("Sign in failed:", err);
             setError(err.response.data.error);
