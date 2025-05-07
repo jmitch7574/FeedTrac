@@ -11,9 +11,11 @@ import Dashboard from "./components/dashboard/dashboard";
 import RequireAuth from "@/components/auth/requireAuth.tsx";
 import InsufficientPermission from "@/pages/InsufficientPermission.tsx";
 import Options from "@/pages/Options.tsx";
+import { Toaster } from "./components/ui/sonner.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
+    <Toaster />
     <BrowserRouter>
       <Routes>
         <Route path='/student'>

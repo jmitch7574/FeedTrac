@@ -1,7 +1,8 @@
-
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
 import { Copy } from "lucide-react";
+import { Toaster } from "../ui/sonner";
 
 
 const CopyToClipboard = ({text} : {text: string}) => {
@@ -24,7 +25,10 @@ const CopyToClipboard = ({text} : {text: string}) => {
           <Copy className="h-4 w-4" />
           <span className="sr-only">Copy</span>
           {copied && (
-            <span className="ml-2 text-sm text-green-500">Copied!</span>
+            <>
+            {toast.success("Copied to clipboard!")}
+            <span className='ml-2 text-sm text-green-500'>Copied!</span>
+          </>
           )}
         </Button>
       );
