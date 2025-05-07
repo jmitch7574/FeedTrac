@@ -26,9 +26,7 @@ createRoot(document.getElementById("root")!).render(
           <Route path='/student/signup' element={<SsignUp />} />
           <Route path='/student/signin' element={<SsignIn />} />
         </Route>
-        
-        <Route path='/insufficientPermissions' element={<InsufficientPermission />}/>
-        
+        <Route path='/insufficientPermissions' element={<InsufficientPermission />} />
         // -- route for teachers
         <Route path='/teacher/signin' element={<TsignIn />} />
         // -- Require auth
