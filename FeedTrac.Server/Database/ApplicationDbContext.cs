@@ -44,6 +44,11 @@ namespace FeedTrac.Server.Database
         public DbSet<FeedbackTicket> FeedbackTicket { get; set; }
         
         /// <summary>
+        /// The ticket summaries cache
+        /// </summary>
+        public DbSet<TicketSummary> TicketSummaries { get; set; }
+        
+        /// <summary>
         /// DBContext Constructor
         /// </summary>
         /// <param name="options"></param>
@@ -115,6 +120,12 @@ namespace FeedTrac.Server.Database
                 .HasOne(fm => fm.Ticket)
                 .WithMany(ft => ft.Messages)
                 .HasForeignKey(fm => fm.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            builder.Entity<TicketSummary>()
+                .HasOne(ts => ts.Ticket)
+                .WithMany(ft => ft.Summaries)
+                .HasForeignKey(ts => ts.TicketId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<MessageImage>()

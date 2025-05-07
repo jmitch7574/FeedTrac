@@ -9,13 +9,19 @@ public class SummarisationResponse
 	/// A one to two sentence summary of the feedback ticket
 	/// </summary>
 	public string Summary { get; set; }
+	
+	/// <summary>
+	/// Flag for whether this summary was a cached response
+	/// </summary>
+	public bool UsedCachedResponse { get; set; }
 
 	/// <summary>
 	/// Constructor for response
 	/// </summary>
 	/// <param name="summary"></param>
-	public SummarisationResponse(string summary)
+	public SummarisationResponse(string summary, bool cached)
 	{
 		Summary = summary;
+		UsedCachedResponse = cached;
 	}
 }

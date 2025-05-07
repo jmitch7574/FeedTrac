@@ -349,7 +349,39 @@ public class TicketController : Controller
     [HttpGet("{ticketId}/summarize")]
     public async Task<IActionResult> Summarize(int ticketId)
     {
+        // Get user and ticket and check access rights
         var user = await _userManager.RequireUser();
+        
+        FeedbackTicket? ticket = await _context.Tickets
+            .Include(t => t.Messages)
+            .ThenInclude(m => m.Author)
+            .Include(t => t.Module)
+            .ThenInclude(m => m.TeacherModule)
+            .ThenInclude(tm => tm.User)
+            .Include(feedbackTicket => feedbackTicket.Owner)
+            .Include(t => t.Summaries)
+            .FirstOrDefaultAsync(t => t.TicketId == ticketId);
+        
+        if (ticket is null)
+            throw new ResourceNotFoundException();
+
+        if (ticket.Owner != user && ticket.Module.TeacherModule.Find(tm => tm.User.Id == user.Id) == null)
+            throw new UnauthorizedResourceAccessException();
+
+        if (ticket.Messages.Count == 0)
+        {
+            return Ok(new SummarisationResponse("A summary could not be made without any messages", false));
+        }
+        
+        // Check if any valid cached summaries exist
+        TicketSummary? summary = ticket.Summaries.FirstOrDefault(t => t.MessageCount == ticket.Messages.Count);
+
+        if (summary is not null)
+        {
+            return Ok(new SummarisationResponse(summary.Content, true));
+        }
+        
+        
         List<string> messages = new() { """
                                         You are a summarization agent for a ticketing system within an academic institution.
                                         A "Ticket" in this scenario is a conversation between a student and the module leaders.
@@ -364,25 +396,6 @@ public class TicketController : Controller
         if (apiKey == null)
             return Unauthorized(new { error = "The Gemini API Key is not setup"});
         
-        FeedbackTicket? ticket = await _context.Tickets
-            .Include(t => t.Messages)
-            .ThenInclude(m => m.Author)
-            .Include(t => t.Module)
-            .ThenInclude(m => m.TeacherModule)
-            .ThenInclude(tm => tm.User)
-            .Include(feedbackTicket => feedbackTicket.Owner)
-            .FirstOrDefaultAsync(t => t.TicketId == ticketId);
-        
-        if (ticket is null)
-            throw new ResourceNotFoundException();
-
-        if (ticket.Owner != user && ticket.Module.TeacherModule.Find(tm => tm.User.Id == user.Id) == null)
-            throw new UnauthorizedResourceAccessException();
-
-        if (ticket.Messages.Count == 0)
-        {
-            return Ok(new SummarisationResponse("A summary could not be made without any messages"));
-        }
 
         messages.Add($"Title: {ticket.Title}");
         messages.Add($"Module: {ticket.Module.Name}");
@@ -420,7 +433,12 @@ public class TicketController : Controller
             .GetProperty("parts")[0]
             .GetProperty("text")
             .ToString();
+
+        _context.TicketSummaries.Add(new TicketSummary
+            { Content = text, TicketId = ticket.TicketId, MessageCount = ticket.Messages.Count });
+
+        await _context.SaveChangesAsync();
         
-        return Ok(new SummarisationResponse(text));
+        return Ok(new SummarisationResponse(text, false));
     }
 }
