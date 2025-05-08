@@ -75,7 +75,7 @@ public class FeedTracUserManager : UserManager<ApplicationUser>
     /// <exception cref="Exception"></exception>
     /// <exception cref="NotLoggedInException"></exception>
     /// <exception cref="InsufficientRolesException"></exception>
-    public async Task<ApplicationUser> RequireUser(params string[] roles)
+    public virtual async Task<ApplicationUser> RequireUser(params string[] roles) //updated to virtual for override during testing
     {
         if (_httpContextAccessor.HttpContext?.User.Identity is null)
             throw new NotLoggedInException();

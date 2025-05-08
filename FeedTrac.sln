@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FeedTrac.Server", "FeedTrac
 EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "feedtrac.client", "feedtrac.client\feedtrac.client.esproj", "{2D7F69A6-4AE0-4120-98A7-197E633E5545}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FeedTrac.Tests", "FeedTrac.Tests\FeedTrac.Tests.csproj", "{3B921A6E-A96C-4678-AD0E-4DDEC17BED3C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +25,10 @@ Global
 		{2D7F69A6-4AE0-4120-98A7-197E633E5545}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D7F69A6-4AE0-4120-98A7-197E633E5545}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2D7F69A6-4AE0-4120-98A7-197E633E5545}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{3B921A6E-A96C-4678-AD0E-4DDEC17BED3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B921A6E-A96C-4678-AD0E-4DDEC17BED3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B921A6E-A96C-4678-AD0E-4DDEC17BED3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B921A6E-A96C-4678-AD0E-4DDEC17BED3C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

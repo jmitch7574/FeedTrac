@@ -30,7 +30,7 @@ public class EmailService
 	/// </summary>
 	/// <param name="user">The new application user</param>
 	/// <param name="plainTextPass">The user's password</param>
-	public async Task TeacherWelcomeEmail(ApplicationUser user, string plainTextPass)
+	public virtual async Task TeacherWelcomeEmail(ApplicationUser user, string plainTextPass) //updated to virtual for override during testing
 	{
 		await SendEmailAsync(
 			to: user.Email ?? string.Empty,
@@ -108,7 +108,7 @@ public class EmailService
 	/// Email teachers and ticket owner when a ticket is marked as resolved
 	/// </summary>
 	/// <param name="ticket"></param>
-	public async Task TicketResolved(FeedbackTicket ticket)
+	public virtual async Task TicketResolved(FeedbackTicket ticket)
 	{
 		List<TeacherModule> teachers = ticket.Module.TeacherModule;
 		
