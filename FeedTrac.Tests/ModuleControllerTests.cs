@@ -29,6 +29,7 @@ namespace FeedTrac.Tests.Controllers
         private Mock<FeedTracUserManager> _mockUserManager;
         private Mock<ModuleService> _mockModuleService;
         private ModuleController _controller;
+        private Mock<PasswordGenerator> _mockPasswordGenerator;
 
         [TestInitialize]
         public void Setup()
@@ -51,6 +52,8 @@ namespace FeedTrac.Tests.Controllers
             _mockModuleService = new Mock<ModuleService>(_mockContext.Object, _mockUserManager.Object);
 
             _controller = new ModuleController(_mockContext.Object, _mockUserManager.Object, _mockModuleService.Object);
+            
+            _mockPasswordGenerator = new Mock<PasswordGenerator>(_mockContext.Object);
         }
 
         [TestMethod]
@@ -102,41 +105,6 @@ namespace FeedTrac.Tests.Controllers
             Assert.IsInstanceOfType(ok.Value, typeof(ModuleCollectionDto));
             var dto = ok.Value as ModuleCollectionDto;
             Assert.AreEqual(1, dto.Modules.Count());
-        }
-
-        [TestMethod]
-        //unable to mock IAsyncQueryProvider
-        public async Task JoinModule_AsStudent_Success()
-        {
-            Assert.IsTrue(true);
-        }
-
-        [TestMethod]
-        //unable to mock IAsyncQueryProvider
-        public async Task JoinModule_InvalidCode_ThrowsNotFound()
-        {
-            Assert.IsTrue(true);
-        }
-
-        [TestMethod]
-        //unable to mock IAsyncQueryProvider
-        public async Task GetModule_AsStudent_ReturnsModule()
-        {
-            Assert.IsTrue(true);
-        }
-
-        [TestMethod]
-        //unable to mock IAsyncQueryProvider
-        public async Task GetModule_UnauthorizedStudent_Throws()
-        {
-            Assert.IsTrue(true);
-        }
-
-        [TestMethod]
-        //unable to mock IAsyncQueryProvider
-        public async Task GetModule_NotFound_Throws()
-        {
-            Assert.IsTrue(true);
         }
 
         [TestMethod]
@@ -194,9 +162,9 @@ namespace FeedTrac.Tests.Controllers
         [TestMethod]
         public async Task CreateModule_AsTeacher_Success()
         {
-            var teacher = TestDataMocks.CreateUser("teacher1");
+            var teacher = TestDataMocks.CreateUser("Teacher");
 
-            _mockUserManager.Setup(m => m.RequireUser("Teacher")).ReturnsAsync(teacher);
+            _mockUserManager.Setup(m => m.RequireUser("Teacher", "Admin")).ReturnsAsync(teacher);
             _mockContext.Setup(c => c.Modules).Returns(DbSetMockHelper.CreateMockDbSet(new List<Module>()).Object);
 
             var result = await _controller.CreateModule("New Module");

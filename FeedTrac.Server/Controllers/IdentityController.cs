@@ -12,8 +12,10 @@ using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using Microsoft.AspNetCore.Identity.Data;
 using FeedTrac.Server.Models.Forms;
+using FeedTrac.Server.Models.Responses;
 using FeedTrac.Server.Models.Responses.Identity;
 using FeedTrac.Server.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
 using OtpNet;
 
 namespace FeedTrac.Server.Controllers;
@@ -130,20 +132,20 @@ public class IdentityController : ControllerBase
     {
 
         var user = await _userManager.FindByEmailAsync(login.Email);
-        if (user == null) return Unauthorized(new { error = "Invalid credentials"});
+        if (user == null) return Unauthorized(new BadResponse("Invalid credentials"));
 
         // Check user role before allowing login
         var roles = await _userManager.GetRolesAsync(user);
         if (!roles.Contains("Student")) // Change condition as needed
         {
-            return BadRequest(new { error = "This endpoint is for signing into student accounts only"});
+            return BadRequest(new BadResponse("This endpoint is for signing into student accounts only"));
         }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
-        if (!result.Succeeded) return Unauthorized(new { error = "Invalid credentials"});
+        if (!result.Succeeded) return Unauthorized(new BadResponse("Invalid credentials"));
 
         await _signInManager.SignInAsync(user, isPersistent: login.RememberMe);
-        return Ok(new { message = "Logged in successfully"});
+        return Ok(new OkMessage("Logged in Successfully"));
     }
 
     /// <summary>
@@ -158,13 +160,13 @@ public class IdentityController : ControllerBase
     public async Task<IActionResult> TeacherLogin([FromBody] TeacherLoginRequest login)
     {
         var user = await _userManager.FindByEmailAsync(login.Email);
-        if (user == null) return Unauthorized(new { error = "Invalid credentials"});
+        if (user == null) return Unauthorized(new BadResponse("Invalid credentials"));
 
         // Check user role before allowing login
         var roles = await _userManager.GetRolesAsync(user);
         if (!roles.Contains("Teacher") && !roles.Contains("Admin")) // Change condition as needed
         {
-            return BadRequest(new { error = "This endpoint is for signing into teacher accounts only"});
+            return BadRequest(new BadResponse("This endpoint is for signing into teacher accounts only"));
         }
 
 
@@ -177,10 +179,10 @@ public class IdentityController : ControllerBase
 
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
-        if (!result.Succeeded) return Unauthorized(new { error = "Invalid credentials"});
+        if (!result.Succeeded) return Unauthorized(new BadResponse("Invalid credentials"));
 
         await _signInManager.SignInAsync(user, isPersistent: login.RememberMe);
-        return Ok(new { message = "Logged in successfully"});
+        return Ok(new OkMessage("Logged in successfully"));
     }
 
     /// <summary>
@@ -216,7 +218,7 @@ public class IdentityController : ControllerBase
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
         {
-            return BadRequest(new { error = "Could not find user"});
+            return BadRequest(new BadResponse("Could not find user."));
         }
         var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.ResetCode));
         var result = await _userManager.ResetPasswordAsync(user, code, request.NewPassword);
@@ -255,7 +257,7 @@ public class IdentityController : ControllerBase
     public async Task<IActionResult> Logout()
     {
         await _signInManager.SignOutAsync();
-        return Ok(new { message = "Logged out successfully"});
+        return Ok(new OkMessage("Logged out successfully"));
     }
 
     /// <summary>
