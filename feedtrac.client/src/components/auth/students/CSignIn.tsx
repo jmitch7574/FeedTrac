@@ -11,8 +11,8 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
-  const [Email, setEmail] = useState("umarnauman@lincoln.ac.uk");
-  const [Password, setPassword] = useState("Test1234!");
+  const [Email, setEmail] = useState("");
+  const [Password, setPassword] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { teacherRegister } from "@/types/Index";
 import { registerTeacher } from "@/hooks/useAuth";
-import ErrorBox from "@/components/ui/ErrorBox.tsx";
 import { toast } from "sonner";
 
 export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
@@ -65,7 +64,6 @@ export function CSignUp({ className, ...props }: React.ComponentProps<"div">) {
           </form>
         </CardContent>
       </Card>
-      <ErrorBox errors={errors}></ErrorBox>
     </div>
   );
 }

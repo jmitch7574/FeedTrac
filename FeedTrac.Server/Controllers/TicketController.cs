@@ -329,8 +329,8 @@ public class TicketController : Controller
         {
             Ticket = ticket,
             TicketId = ticket.TicketId,
-            Author = ticket.Owner,
-            AuthorId = ticket.OwnerId,
+            Author = user,
+            AuthorId = user.Id,
             Content = "Ticket has been marked as resolved",
             CreatedAt = DateTime.UtcNow
         });

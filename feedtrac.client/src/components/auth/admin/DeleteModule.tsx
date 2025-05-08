@@ -1,7 +1,7 @@
 import { deleteModule } from "@/hooks/useModules";
 import { useState } from "react";
 
-const DeleteModule = ({ moduleId, onModuleDestroy }: { moduleId: number; onModuleDestroy: () => void }) => {
+const DeleteModule = ({ moduleId, onModuleDestroy }: { moduleId: number, onModuleDestroy: () => void }) => {
   const [error, setError] = useState<string | null>(null);
 
   const handleDelete = async (e: React.MouseEvent) => {
