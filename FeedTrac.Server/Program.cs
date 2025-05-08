@@ -110,10 +110,12 @@ namespace FeedTrac.Server
                 .AddApiEndpoints();
 
             builder.Services.AddHttpContextAccessor();
+            builder.Services.AddHttpClient();
             builder.Services.AddScoped<ModuleService>();
             builder.Services.AddScoped<ImageService>();
             builder.Services.AddScoped<FeedTracUserManager>();
             builder.Services.AddScoped<EmailService>();
+            builder.Services.AddScoped<PasswordGenerator>();
 
             builder.Services.Configure<IdentityOptions>(options =>
             {
@@ -132,7 +134,7 @@ namespace FeedTrac.Server
             {
                 options.AddPolicy("Localhost", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5174")
+                    policy.WithOrigins("http://localhost:5173")
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();
@@ -143,8 +145,10 @@ namespace FeedTrac.Server
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
+            app.UseRouting();
+
             app.UseCors("Localhost");
-            app.UseMiddleware<FeedTracMiddleware>(); // Register your custom middleware
+            app.UseMiddleware<FeedTracMiddleware>(); 
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -158,6 +162,7 @@ namespace FeedTrac.Server
             app.UseHttpsRedirection();
             app.MapControllers();
             
+            app.UseAuthentication(); 
 
             app.UseAuthorization();
 

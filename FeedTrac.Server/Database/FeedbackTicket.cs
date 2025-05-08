@@ -87,6 +87,11 @@ namespace FeedTrac.Server.Database
         /// Messages within this ticket
         /// </summary>
         public List<FeedbackMessage> Messages { get; set; } = new();
+        
+        /// <summary>
+        /// Summaries made for this ticket
+        /// </summary>
+        public List<TicketSummary> Summaries { get; set; } = new();
 
         /// <summary>
         /// Check if a user should have access to this ticket

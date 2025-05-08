@@ -12,8 +12,10 @@ using FeedTrac.Server.Database;
 using FeedTrac.Server.Extensions;
 using Microsoft.AspNetCore.Identity.Data;
 using FeedTrac.Server.Models.Forms;
+using FeedTrac.Server.Models.Responses;
 using FeedTrac.Server.Models.Responses.Identity;
 using FeedTrac.Server.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
 using OtpNet;
 
 namespace FeedTrac.Server.Controllers;
@@ -28,6 +30,7 @@ public class IdentityController : ControllerBase
     private readonly FeedTracUserManager _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly EmailService _emailService;
+    private readonly PasswordGenerator _passwordGenerator;
 
     /// <summary>
     /// 
@@ -35,13 +38,16 @@ public class IdentityController : ControllerBase
     /// <param name="userManager"></param>
     /// <param name="signInManager"></param>
     /// <param name="emailService"></param>
+    /// <param name="passwordGenerator"></param>
     public IdentityController(FeedTracUserManager userManager,
                               SignInManager<ApplicationUser> signInManager,
-                              EmailService emailService)
+                              EmailService emailService,
+                              PasswordGenerator passwordGenerator)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _emailService = emailService;
+        _passwordGenerator = passwordGenerator;
     }
 
     /// <summary>
@@ -77,11 +83,13 @@ public class IdentityController : ControllerBase
     [HttpPost("teacher/register")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> RegisterTeacher([FromBody] RegisterUserRequest request)
+    public async Task<IActionResult> RegisterTeacher([FromBody] RegisterTeacherRequest request)
     {
+        string password = PasswordGenerator.GeneratePassword();
         await _userManager.RequireUser("Admin");
         var user = new ApplicationUser { UserName = request.Email, Email = request.Email, FirstName = request.FirstName, LastName = request.LastName };
-        var result = await _userManager.CreateAsync(user, request.Password);
+
+        var result = await _userManager.CreateAsync(user, password);
 
         if (!result.Succeeded)
         {
@@ -102,7 +110,7 @@ public class IdentityController : ControllerBase
         // Update the user with the changes
         await _userManager.UpdateAsync(user);
         
-        await _emailService.TeacherWelcomeEmail(user, request.Password);
+        await _emailService.TeacherWelcomeEmail(user, password);
         
         RegisteredTeacher response = new RegisteredTeacher
         {
@@ -124,20 +132,20 @@ public class IdentityController : ControllerBase
     {
 
         var user = await _userManager.FindByEmailAsync(login.Email);
-        if (user == null) return Unauthorized("Invalid credentials");
+        if (user == null) return Unauthorized(new BadResponse("Invalid credentials"));
 
         // Check user role before allowing login
         var roles = await _userManager.GetRolesAsync(user);
         if (!roles.Contains("Student")) // Change condition as needed
         {
-            return BadRequest("This endpoint is for student accounts only");
+            return BadRequest(new BadResponse("This endpoint is for signing into student accounts only"));
         }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
-        if (!result.Succeeded) return Unauthorized("Invalid credentials");
+        if (!result.Succeeded) return Unauthorized(new BadResponse("Invalid credentials"));
 
         await _signInManager.SignInAsync(user, isPersistent: login.RememberMe);
-        return Ok();
+        return Ok(new OkMessage("Logged in Successfully"));
     }
 
     /// <summary>
@@ -152,13 +160,13 @@ public class IdentityController : ControllerBase
     public async Task<IActionResult> TeacherLogin([FromBody] TeacherLoginRequest login)
     {
         var user = await _userManager.FindByEmailAsync(login.Email);
-        if (user == null) return Unauthorized("User not found");
+        if (user == null) return Unauthorized(new BadResponse("Invalid credentials"));
 
         // Check user role before allowing login
         var roles = await _userManager.GetRolesAsync(user);
         if (!roles.Contains("Teacher") && !roles.Contains("Admin")) // Change condition as needed
         {
-            return BadRequest("Not a teacher account");
+            return BadRequest(new BadResponse("This endpoint is for signing into teacher accounts only"));
         }
 
 
@@ -166,15 +174,15 @@ public class IdentityController : ControllerBase
 
         if (!isValid)
         {
-            return Unauthorized("Invalid two-factor code");
+            return Unauthorized(new { error = "Invalid 2FA code"});
         }
 
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
-        if (!result.Succeeded) return Unauthorized("Invalid credentials");
+        if (!result.Succeeded) return Unauthorized(new BadResponse("Invalid credentials"));
 
         await _signInManager.SignInAsync(user, isPersistent: login.RememberMe);
-        return Ok();
+        return Ok(new OkMessage("Logged in successfully"));
     }
 
     /// <summary>
@@ -210,7 +218,7 @@ public class IdentityController : ControllerBase
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
         {
-            return BadRequest("Could not find user.");
+            return BadRequest(new BadResponse("Could not find user."));
         }
         var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.ResetCode));
         var result = await _userManager.ResetPasswordAsync(user, code, request.NewPassword);
@@ -249,7 +257,7 @@ public class IdentityController : ControllerBase
     public async Task<IActionResult> Logout()
     {
         await _signInManager.SignOutAsync();
-        return Ok("Logged out successfully");
+        return Ok(new OkMessage("Logged out successfully"));
     }
 
     /// <summary>

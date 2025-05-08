@@ -250,6 +250,31 @@ namespace FeedTrac.Server.Migrations
                     b.ToTable("TeacherModules", "feedtrac");
                 });
 
+            modelBuilder.Entity("FeedTrac.Server.Database.TicketSummary", b =>
+                {
+                    b.Property<int>("SummaryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SummaryId"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("MessageCount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TicketId")
+                        .HasColumnType("int");
+
+                    b.HasKey("SummaryId");
+
+                    b.HasIndex("TicketId");
+
+                    b.ToTable("TicketSummaries", "feedtrac");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -469,6 +494,17 @@ namespace FeedTrac.Server.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("FeedTrac.Server.Database.TicketSummary", b =>
+                {
+                    b.HasOne("FeedTrac.Server.Database.FeedbackTicket", "Ticket")
+                        .WithMany("Summaries")
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Ticket");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -537,6 +573,8 @@ namespace FeedTrac.Server.Migrations
             modelBuilder.Entity("FeedTrac.Server.Database.FeedbackTicket", b =>
                 {
                     b.Navigation("Messages");
+
+                    b.Navigation("Summaries");
                 });
 
             modelBuilder.Entity("FeedTrac.Server.Database.Module", b =>

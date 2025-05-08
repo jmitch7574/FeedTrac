@@ -78,7 +78,7 @@ public class ModuleController : Controller
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> JoinModule(string joinCode)
     {
-        var user = await _userManager.RequireUser("Student", "Teacher");
+        var user = await _userManager.RequireUser();
 
         var userId = user.Id;
         var module = await _context.Modules
@@ -103,7 +103,7 @@ public class ModuleController : Controller
                 Module = module
             });
         }
-        if (await _userManager.IsInRoleAsync(user, "Teacher"))
+        if (await _userManager.IsInRoleAsync(user, "Teacher") || await _userManager.IsInRoleAsync(user, "Admin"))
         {
             if (module.TeacherModule.Find(sm => sm.UserId == userId && sm.Module == module) != null)
                 return BadRequest(new { error = "User is already a part of this module" });
@@ -139,12 +139,14 @@ public class ModuleController : Controller
         var module = await _context.Modules.Where(m => m.Id == id)
             .Include(m => m.StudentModule)
             .ThenInclude(sm => sm.User)
+            .Include(m => m.TeacherModule)
+            .ThenInclude(tm => tm.User)
             .FirstOrDefaultAsync();
 
         if (module == null)
             throw new ResourceNotFoundException();
 
-        if (! await _userManager.IsInRoleAsync(user, "Admin") && module.StudentModule.FirstOrDefault(sm => sm.UserId == user.Id) == null )
+        if (! await _userManager.IsInRoleAsync(user, "Admin") && !(module.StudentModule.FirstOrDefault(sm => sm.UserId == user.Id) == null || module.TeacherModule.FirstOrDefault(sm => sm.UserId == user.Id) == null))
             throw new UnauthorizedAccessException();
         
         return Ok(new ModuleDto(module));
@@ -221,7 +223,7 @@ public class ModuleController : Controller
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateModule(string name)
     {
-        var user = await _userManager.RequireUser("Teacher");
+        var user = await _userManager.RequireUser("Teacher", "Admin");
         
         Module newModule = new Module
         {

@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using FeedTrac.Server.Extensions;
 using System;
+using System.Net.Http;
 
 namespace FeedTrac.Tests.Controllers
 {
@@ -29,6 +30,7 @@ namespace FeedTrac.Tests.Controllers
         private Mock<ImageService> _mockImageService;
         private Mock<EmailService> _mockEmailService;
         private TicketController _controller;
+        private Mock<IHttpClientFactory> _mockHttpClientFactory;
 
         [TestInitialize]
         public void Setup()
@@ -51,13 +53,15 @@ namespace FeedTrac.Tests.Controllers
             _mockModuleService = new Mock<ModuleService>(_mockContext.Object, _mockUserManager.Object);
             _mockImageService = new Mock<ImageService>(_mockContext.Object);
             _mockEmailService = new Mock<EmailService>();
+            _mockHttpClientFactory = new Mock<IHttpClientFactory>();
 
             _controller = new TicketController(
                 _mockContext.Object,
                 _mockUserManager.Object,
                 _mockModuleService.Object,
                 _mockImageService.Object,
-                _mockEmailService.Object
+                _mockEmailService.Object,
+                _mockHttpClientFactory.Object
             );
         }
 

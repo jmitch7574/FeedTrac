@@ -38,6 +38,7 @@ namespace FeedTrac.Server.Controllers
         [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [Produces("image/jpeg", "image/png")]
         public async Task<IActionResult> GetImage(int imageId)
         {
             var user = await _userManager.RequireUser();
@@ -62,7 +63,9 @@ namespace FeedTrac.Server.Controllers
             if (image.Message.Ticket.Module.StudentModule.Find(sm => sm.User.Id == user.Id) == null && image.Message.Ticket.Module.TeacherModule.Find(tm => tm.User.Id == user.Id) == null)
                 throw new UnauthorizedResourceAccessException();
 
-            return File(image.ImageData, image.ImageType, image.ImageName);
+            Response.ContentType = image.ImageType;
+            Response.Headers["Content-Disposition"] = $"inline; filename=\"{image.Id}\"";
+            return new FileContentResult(image.ImageData, image.ImageType);
         }
     }
 }
