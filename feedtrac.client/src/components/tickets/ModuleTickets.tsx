@@ -6,9 +6,10 @@ import { TicketCard } from "./TicketCard";
 
 interface ModuleTicketsProps {
   moduleId: number;
+  refresh: Boolean;
 }
 
-export default function ModuleTickets({ moduleId }: ModuleTicketsProps) {
+export default function ModuleTickets({ moduleId, refresh }: ModuleTicketsProps) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +27,7 @@ export default function ModuleTickets({ moduleId }: ModuleTicketsProps) {
       }
     };
     fetch();
-  }, [moduleId]);
+  }, [moduleId, refresh]);
 
   if (loading) return <p>Loading tickets…</p>;
   if (error) return <p className='text-red-500'>{error}</p>;

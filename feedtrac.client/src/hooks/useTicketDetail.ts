@@ -35,9 +35,9 @@ export default function useTicketDetail(ticketId: number) {
   }, [ticketId, refresh]);
 
   const onAddMessage = useCallback(
-    async (content: string) => {
+    async (content: string, images: File[]) => {
       if (!ticket) return;
-      const updated = await addMessageToTicket({ content, images: [] }, ticket.id);
+      const updated = await addMessageToTicket({ content, images }, ticket.id);
       setTicket(updated);
       setRefresh(refresh => !refresh);
     },

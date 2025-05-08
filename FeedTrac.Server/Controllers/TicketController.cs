@@ -213,6 +213,7 @@ public class TicketController : Controller
             CreatedAt = DateTime.UtcNow
         };
         _context.Messages.Add(message);
+        await _context.SaveChangesAsync();
 
         foreach (var image in request.FirstMessage.Images)
         {
