@@ -60,7 +60,7 @@ const RenderModules = () => {
         {(role === "admin" || role === "teacher") && <CreateModule onModuleCreated={handleModuleCreation} />}
       </ul>
 
-      {role === "admin" && <RenderOnlyAdmin />}
+      {role === "admin" && <RenderOnlyAdmin onModuleDestroy={handleModuleDestroy} refresh={refresh} />}
     </div>
   );
 };

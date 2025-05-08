@@ -11,8 +11,8 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 export function CSignIn({ className, ...props }: React.ComponentProps<"div">) {
-  const [Email, setEmail] = useState("feedtrac-admin@lincoln.ac.uk");
-  const [Password, setPassword] = useState("Password123!");
+  const [Email, setEmail] = useState("");
+  const [Password, setPassword] = useState("");
   const [twoFactorCode, setTwoFactorCode] = useState("");
   // const [error, setError] = useState("");
   const navigate = useNavigate();
